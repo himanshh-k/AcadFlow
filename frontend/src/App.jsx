@@ -12,6 +12,10 @@ import {
   Sparkles,
   LayoutGrid,
   Trash2,
+  Plus,
+  Settings,
+  Code,
+  X
 } from 'lucide-react'
 import {
   generateTimetable,
@@ -20,17 +24,75 @@ import {
   rescheduleDynamic,
   getErrorMessage,
 } from './api/client'
-import { samplePayload, DAY_LABELS } from './data/samplePayload'
 import ErrorBanner from './components/ErrorBanner'
 import TimetableGrid from './components/TimetableGrid'
 import AddExtraModal from './components/AddExtraModal'
 import RescheduleModal from './components/RescheduleModal'
 
+const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
+const defaultPayload = {
+  num_days: 5,
+  num_periods: 8,
+  sections: ["AIML-A", "AIML-B", "AIML-C"],
+  teachers: ["NG", "PD", "PA", "PJ", "AP", "PP", "SU", "AL", "ST", "DM", "SL", "SB"],
+  rooms: ["DT 403", "DT 406", "DT 412", "Lab 409", "Lab 411", "Lab 307"],
+  courses: [
+    { id: "CAT6001", name: "DL-1", teachers: ["NG"], section: "AIML-A", hours: 3, is_lab: false, elective_group: null },
+    { id: "CAP6001", name: "DL-1 LAB", teachers: ["NG", "PD"], section: "AIML-A", hours: 2, is_lab: true, elective_group: null },
+    { id: "CAT6002", name: "CV", teachers: ["PA"], section: "AIML-A", hours: 3, is_lab: false, elective_group: null },
+    { id: "CAP6002", name: "CV LAB", teachers: ["PA", "PJ"], section: "AIML-A", hours: 2, is_lab: true, elective_group: null },
+    { id: "CAT6003-1", name: "NLP", teachers: ["AP"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
+    { id: "CAT6003-2", name: "DMW", teachers: ["SU"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
+    { id: "CAP6003-1", name: "NLP LAB", teachers: ["AP", "PP"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
+    { id: "CAP6003-2", name: "DMW LAB", teachers: ["SU", "AL"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
+    { id: "CAT6004-1", name: "BCT", teachers: ["ST"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
+    { id: "CAT6004-2", name: "CRM", teachers: ["SL"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
+    { id: "CAP6004-1", name: "BCT LAB", teachers: ["ST", "DM"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
+    { id: "CAP6004-2", name: "CRM LAB", teachers: ["SL"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
+    { id: "CAT6005", name: "IoT", teachers: ["SB"], section: "AIML-A", hours: 2, is_lab: false, elective_group: null },
+    
+    { id: "CAT6001", name: "DL-1", teachers: ["NG"], section: "AIML-B", hours: 3, is_lab: false, elective_group: null },
+    { id: "CAP6001", name: "DL-1 LAB", teachers: ["NG", "PD"], section: "AIML-B", hours: 2, is_lab: true, elective_group: null },
+    { id: "CAT6002", name: "CV", teachers: ["PA"], section: "AIML-B", hours: 3, is_lab: false, elective_group: null },
+    { id: "CAP6002", name: "CV LAB", teachers: ["PA", "PJ"], section: "AIML-B", hours: 2, is_lab: true, elective_group: null },
+    { id: "CAT6003-1", name: "NLP", teachers: ["AP"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
+    { id: "CAT6003-2", name: "DMW", teachers: ["SU"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
+    { id: "CAP6003-1", name: "NLP LAB", teachers: ["AP", "PP"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
+    { id: "CAP6003-2", name: "DMW LAB", teachers: ["SU", "AL"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
+    { id: "CAT6004-1", name: "BCT", teachers: ["ST"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
+    { id: "CAT6004-2", name: "CRM", teachers: ["SL"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
+    { id: "CAP6004-1", name: "BCT LAB", teachers: ["ST", "DM"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
+    { id: "CAP6004-2", name: "CRM LAB", teachers: ["SL"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
+    { id: "CAT6005", name: "IoT", teachers: ["SB"], section: "AIML-B", hours: 2, is_lab: false, elective_group: null },
+
+    { id: "CAT6001", name: "DL-1", teachers: ["NG"], section: "AIML-C", hours: 3, is_lab: false, elective_group: null },
+    { id: "CAP6001", name: "DL-1 LAB", teachers: ["NG", "PD"], section: "AIML-C", hours: 2, is_lab: true, elective_group: null },
+    { id: "CAT6002", name: "CV", teachers: ["PA"], section: "AIML-C", hours: 3, is_lab: false, elective_group: null },
+    { id: "CAP6002", name: "CV LAB", teachers: ["PA", "PJ"], section: "AIML-C", hours: 2, is_lab: true, elective_group: null },
+    { id: "CAT6003-1", name: "NLP", teachers: ["AP"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
+    { id: "CAT6003-2", name: "DMW", teachers: ["SU"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
+    { id: "CAP6003-1", name: "NLP LAB", teachers: ["AP", "PP"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
+    { id: "CAP6003-2", name: "DMW LAB", teachers: ["SU", "AL"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
+    { id: "CAT6004-1", name: "BCT", teachers: ["ST"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
+    { id: "CAT6004-2", name: "CRM", teachers: ["SL"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
+    { id: "CAP6004-1", name: "BCT LAB", teachers: ["ST", "DM"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
+    { id: "CAP6004-2", name: "CRM LAB", teachers: ["SL"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
+    { id: "CAT6005", name: "IoT", teachers: ["SB"], section: "AIML-C", hours: 2, is_lab: false, elective_group: null }
+  ]
+}
+
+const emptyPayload = {
+  num_days: 5,
+  num_periods: 8,
+  sections: [],
+  teachers: [],
+  rooms: [],
+  courses: []
+}
+
 function normalizeCourseName(name) {
-  return name
-    .replace(/\s*\(Rescheduled\)\s*$/i, '')
-    .replace(/\s*\(Extra\)\s*$/i, '')
-    .trim()
+  return name.replace(/\s*\(Rescheduled\)\s*$/i, '').replace(/\s*\(Extra\)\s*$/i, '').trim()
 }
 
 function findCourseForClass(cls, section, catalog) {
@@ -46,11 +108,7 @@ function loadScheduleFromStorage() {
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
-    const keys = Object.keys(parsed)
-    if (keys.length === 0) return null
-    for (const k of keys) {
-      if (!Array.isArray(parsed[k])) return null
-    }
+    if (Object.keys(parsed).length === 0) return null
     return parsed
   } catch {
     return null
@@ -58,57 +116,77 @@ function loadScheduleFromStorage() {
 }
 
 export default function App() {
+  // --- STATE ---
   const [schedule, setSchedule] = useState(null)
-  const [activeSection, setActiveSection] = useState('AIML-A')
-  const [loading, setLoading] = useState(true)
+  const [activeSection, setActiveSection] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
-
+  
   const [extraModal, setExtraModal] = useState(null)
   const [rescheduleModal, setRescheduleModal] = useState(null)
 
-  const { num_days, num_periods, rooms, courses } = samplePayload
-  const sections = useMemo(
-    () => (schedule ? Object.keys(schedule).sort() : samplePayload.sections),
-    [schedule],
-  )
+  // --- BUILDER STATE (Initializes with defaultPayload) ---
+  const [inputMode, setInputMode] = useState('visual') // 'visual' | 'json'
+  const [payload, setPayload] = useState(defaultPayload)
+  const [jsonInput, setJsonInput] = useState(JSON.stringify(defaultPayload, null, 2))
 
-  const coursesForActiveSection = useMemo(
-    () => courses.filter((c) => c.section === activeSection),
-    [courses, activeSection],
-  )
+  // New Item Input States
+  const [newSection, setNewSection] = useState('')
+  const [newRoom, setNewRoom] = useState('')
+  const [newTeacher, setNewTeacher] = useState('')
 
+  // New Course Form State
+  const [newCourse, setNewCourse] = useState({
+    id: '', name: '', teachers: '', section: '', hours: 3, is_lab: false, elective_group: ''
+  })
+
+  // Sync JSON text to Payload object
+  useEffect(() => {
+    if (inputMode === 'json') {
+      try {
+        const parsed = JSON.parse(jsonInput)
+        setPayload(parsed)
+      } catch (e) {
+        // Don't update payload if JSON is currently invalid
+      }
+    } else {
+      setJsonInput(JSON.stringify(payload, null, 2))
+    }
+  }, [jsonInput, inputMode, payload])
+
+  // Default the active section or new course section if sections are added
+  useEffect(() => {
+    if (payload.sections.length > 0) {
+      if (!activeSection) setActiveSection(payload.sections[0])
+      if (!newCourse.section) setNewCourse(prev => ({ ...prev, section: payload.sections[0] }))
+    } else {
+      setActiveSection('')
+    }
+  }, [payload.sections, activeSection, newCourse.section])
+
+  // --- COMPUTED PROPERTIES ---
+  const sections = useMemo(() => (schedule ? Object.keys(schedule).sort() : payload.sections), [schedule, payload.sections])
+  const coursesForActiveSection = useMemo(() => payload.courses.filter((c) => c.section === activeSection), [payload.courses, activeSection])
   const sectionClasses = schedule?.[activeSection] ?? []
 
-  const dashboardStats = useMemo(() => {
-    if (!schedule) return null
-    const keys = Object.keys(schedule)
-    let sessions = 0
-    let breaks = 0
-    for (const k of keys) {
-      for (const c of schedule[k]) {
-        if (c.is_recess) breaks += 1
-        else sessions += 1
-      }
-    }
-    return { sections: keys.length, sessions, breaks }
-  }, [schedule])
-
+  // --- ACTIONS ---
   const loadTimetable = useCallback(async (fromButton = false) => {
+    if (payload.sections.length === 0 || payload.courses.length === 0) {
+      setError("Please add at least one section and one course before generating.")
+      return
+    }
+
     setError('')
     if (fromButton) setInfo('')
     setLoading(true)
     try {
-      const data = await generateTimetable(samplePayload)
+      const data = await generateTimetable(payload)
       if (data.status === 'success' && data.schedule) {
         setSchedule(data.schedule)
         const first = Object.keys(data.schedule).sort()[0]
         if (first) setActiveSection(first)
-        setInfo(
-          fromButton
-            ? data.message || 'Timetable generated.'
-            : data.message || 'Timetable loaded from backend.',
-        )
+        setInfo(fromButton ? data.message || 'Timetable generated.' : data.message || 'Timetable loaded from backend.')
       }
     } catch (e) {
       setSchedule(null)
@@ -116,45 +194,15 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [payload])
 
-  // Strict Mode–safe: ref-based "run once" breaks in React 18 dev (double mount → skip restore).
   useEffect(() => {
-    let cancelled = false
     const saved = loadScheduleFromStorage()
     if (saved) {
       const first = Object.keys(saved).sort()[0]
       setSchedule(saved)
       if (first) setActiveSection(first)
-      setLoading(false)
-      setInfo('Saved timetable restored (this browser — refresh safe).')
-      return
-    }
-
-    setLoading(true)
-    ;(async () => {
-      try {
-        setError('')
-        const data = await generateTimetable(samplePayload)
-        if (cancelled) return
-        if (data.status === 'success' && data.schedule) {
-          setSchedule(data.schedule)
-          const first = Object.keys(data.schedule).sort()[0]
-          if (first) setActiveSection(first)
-          setInfo(data.message || 'Timetable loaded from backend.')
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setSchedule(null)
-          setError(getErrorMessage(e))
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-
-    return () => {
-      cancelled = true
+      setInfo('Saved timetable restored.')
     }
   }, [])
 
@@ -168,21 +216,20 @@ export default function App() {
   }, [schedule])
 
   const clearSavedAndRegenerate = useCallback(async () => {
-    try {
-      localStorage.removeItem(SCHEDULE_STORAGE_KEY)
-    } catch {
-      /* ignore */
-    }
+    try { localStorage.removeItem(SCHEDULE_STORAGE_KEY) } catch { }
     setSchedule(null)
-    await loadTimetable(true)
-  }, [loadTimetable])
+    setPayload(emptyPayload)
+    setJsonInput(JSON.stringify(emptyPayload, null, 2))
+    setActiveSection('')
+    setInfo('Workspace cleared. Start from scratch.')
+  }, [])
 
   const runExport = async () => {
     if (!schedule) return
     setError('')
     setLoading(true)
     try {
-      await exportExcel({ schedule, num_days, num_periods })
+      await exportExcel({ schedule, num_days: payload.num_days, num_periods: payload.num_periods })
       setInfo('Excel file downloaded.')
     } catch (e) {
       setError(getErrorMessage(e))
@@ -191,75 +238,47 @@ export default function App() {
     }
   }
 
-  const handleExtraSubmit = async (courseId) => {
-    if (!schedule || extraModal === null) return
-    setError('')
-    setLoading(true)
-    try {
-      const data = await scheduleExtra({
-        current_schedule: schedule,
-        course_id: courseId,
-        section: activeSection,
-        all_courses: courses,
-        all_rooms: rooms,
-        target_day: extraModal.day,
-        num_days,
-        num_periods,
-      })
-      if (data.status === 'success' && data.schedule) {
-        setSchedule(data.schedule)
-        setInfo(data.message || 'Extra class added.')
-        setExtraModal(null)
-      }
-    } catch (e) {
-      setError(getErrorMessage(e))
-    } finally {
-      setLoading(false)
+  // --- BUILDER HANDLERS ---
+  const handleAddItem = (field, value, setter) => {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    if (!payload[field].includes(trimmed)) {
+      setPayload(prev => ({ ...prev, [field]: [...prev[field], trimmed] }))
     }
+    setter('') // Clear input after adding
   }
 
-  const handleRescheduleSubmit = async (targetDay) => {
-    if (!schedule || rescheduleModal === null) return
-    const cls = rescheduleModal.cls
-    const course = findCourseForClass(cls, activeSection, courses)
-    if (!course) {
-      setError('Could not match this slot to a catalog course for rescheduling.')
-      return
-    }
-    setError('')
-    setLoading(true)
-    try {
-      const data = await rescheduleDynamic({
-        current_schedule: schedule,
-        target_day: targetDay,
-        course,
-        all_rooms: rooms,
-        num_periods,
-      })
-      if (data.status === 'success' && data.schedule) {
-        setSchedule(data.schedule)
-        setInfo(data.message || 'Schedule updated.')
-        setRescheduleModal(null)
-      }
-    } catch (e) {
-      setError(getErrorMessage(e))
-    } finally {
-      setLoading(false)
-    }
+  const handleRemoveItem = (field, index) => {
+    setPayload(prev => {
+      const updated = [...prev[field]]
+      updated.splice(index, 1)
+      return { ...prev, [field]: updated }
+    })
   }
 
-  const onEmptySlot = useCallback(
-    (day, period) => {
-      if (!schedule) return
-      setExtraModal({ day, period })
-    },
-    [schedule],
-  )
+  const handleAddCourse = () => {
+    if (!newCourse.id || !newCourse.name || !newCourse.section) return alert("ID, Name, and Section are required.")
+    
+    const courseToAdd = {
+      ...newCourse,
+      teachers: newCourse.teachers.split(',').map(t => t.trim()).filter(t => t),
+      elective_group: newCourse.elective_group.trim() || null
+    }
 
-  const onClassClick = useCallback((cls) => {
-    if (cls.is_recess) return
-    setRescheduleModal({ cls })
-  }, [])
+    setPayload(prev => ({
+      ...prev,
+      courses: [...prev.courses, courseToAdd]
+    }))
+
+    setNewCourse({ id: '', name: '', teachers: '', section: payload.sections[0] || '', hours: 3, is_lab: false, elective_group: '' })
+  }
+
+  const handleRemoveCourse = (courseId, section) => {
+    setPayload(prev => ({
+      ...prev,
+      courses: prev.courses.filter(c => !(c.id === courseId && c.section === section))
+    }))
+  }
 
   return (
     <div className="acadflow-page-bg acadflow-grid-noise relative min-h-screen">
@@ -270,276 +289,292 @@ export default function App() {
       </div>
 
       <div className="relative">
-      {loading && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/[0.18] backdrop-blur-[3px]">
-          <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/[0.97] px-10 py-9 shadow-glow">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/60 via-white to-indigo-50/40" />
-            <div className="relative flex flex-col items-center gap-5">
-              <div className="relative flex h-14 w-14 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500/15" />
-                <Loader2 className="relative h-9 w-9 animate-spin text-blue-600" strokeWidth={2.25} />
-              </div>
-              <div className="max-w-[240px] text-center">
-                <p className="text-sm font-semibold text-slate-800">
-                  {schedule ? 'Applying changes…' : 'Building your timetable'}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  {schedule ? 'Almost there.' : 'OR-Tools is placing classes under your constraints.'}
-                </p>
+        {loading && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/[0.18] backdrop-blur-[3px]">
+            <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/[0.97] px-10 py-9 shadow-glow">
+              <div className="relative flex flex-col items-center gap-5">
+                <Loader2 className="h-9 w-9 animate-spin text-blue-600" />
+                <p className="text-sm font-semibold text-slate-800">Processing Request...</p>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[3.75rem] sm:px-6 lg:px-8">
-          <div className="flex min-w-0 flex-1 items-center gap-5 lg:gap-8">
-            <div className="flex min-w-0 items-center gap-3">
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-600 text-white shadow-md ring-1 ring-slate-900/[0.08]"
-                aria-hidden
-              >
-                <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={2.25} />
+        <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
+                <LayoutGrid className="h-[18px] w-[18px]" />
               </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[15px] font-semibold tracking-tight text-slate-900">AcadFlow</span>
-                  <span className="hidden rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 ring-1 ring-emerald-600/15 sm:inline">
-                    Live
-                  </span>
-                </div>
-                <p className="truncate text-xs text-slate-500">University timetabling</p>
-              </div>
+              <span className="text-[15px] font-semibold tracking-tight text-slate-900">AcadFlow Studio</span>
             </div>
-
-            <nav className="hidden items-center gap-0.5 md:flex" aria-label="Product">
-              <span className="rounded-md bg-slate-900/[0.06] px-3 py-1.5 text-xs font-semibold text-slate-900">
-                Timetable
-              </span>
-              <a
-                href="http://127.0.0.1:8000/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-              >
-                API docs
-                <ExternalLink className="h-3 w-3 opacity-70" aria-hidden />
-              </a>
-            </nav>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <div className="mr-0.5 hidden h-7 w-px bg-slate-200/90 sm:mr-1 sm:block" aria-hidden />
-
-            <button
-              type="button"
-              onClick={() => loadTimetable(true)}
-              disabled={loading}
-              aria-label="Regenerate timetable"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 sm:px-3.5 sm:text-sm"
-            >
-              <Sparkles className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Regenerate</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={runExport}
-              disabled={loading || !schedule}
-              aria-label="Export to Excel"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 sm:px-3.5 sm:text-sm"
-            >
-              <Download className="h-3.5 w-3.5 shrink-0 text-blue-600 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={clearSavedAndRegenerate}
-              disabled={loading}
-              title="Clear browser save and regenerate from server"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-800 disabled:opacity-40 sm:px-3"
-            >
-              <Trash2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="hidden lg:inline">Clear</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
-        <div className="mb-8 space-y-4">
-          <ErrorBanner message={error} onDismiss={() => setError('')} />
-          {info && !error && (
-            <div className="flex items-start gap-3 rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50/95 via-teal-50/40 to-white px-5 py-4 text-sm text-emerald-950 shadow-soft">
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                <CalendarDays className="h-4 w-4" />
-              </span>
-              <p className="min-w-0 flex-1 pt-1 leading-relaxed">{info}</p>
+            
+            <div className="flex gap-2">
               <button
-                type="button"
-                onClick={() => setInfo('')}
-                className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/80"
+                onClick={clearSavedAndRegenerate}
+                disabled={loading}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
               >
-                Dismiss
+                <Trash2 className="h-4 w-4" /> Clear All
               </button>
-            </div>
-          )}
-        </div>
-
-        {!schedule && !loading && (
-          <div className="mx-auto max-w-lg rounded-3xl border border-slate-200/80 bg-white/90 p-10 text-center shadow-soft backdrop-blur-sm">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-glow">
-              <LayoutGrid className="h-8 w-8" strokeWidth={1.75} />
-            </div>
-            {error ? (
-              <>
-                <h3 className="text-lg font-semibold text-slate-900">Can&apos;t reach the solver</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Start the API at{' '}
-                  <code className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs">127.0.0.1:8000</code>
-                </p>
-                <p className="mt-3 font-mono text-xs text-slate-500">cd Backend && uvicorn main:app --reload</p>
-                <button
-                  type="button"
-                  onClick={() => loadTimetable(true)}
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Retry
-                </button>
-              </>
-            ) : (
-              <p className="text-slate-600">
-                Waiting for the timetable. Use <strong>Regenerate</strong> in the header or refresh once the backend is
-                up.
-              </p>
-            )}
-          </div>
-        )}
-
-        {schedule && dashboardStats && (
-          <div className="animate-fade-up space-y-10 opacity-0 [animation-fill-mode:forwards]">
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl space-y-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">Live schedule</p>
-                <h2 className="text-3xl font-bold tracking-tight sm:text-[2.35rem] sm:leading-[1.15]">
-                  <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-800 bg-clip-text text-transparent">
-                    Constraint-aware, production-ready grids
-                  </span>
-                </h2>
-                <p className="max-w-xl text-base leading-relaxed text-slate-600">
-                  Faculty, rooms, labs, parallel electives, and recess — balanced by OR-Tools. Refine slots below; your
-                  browser keeps the latest version safe across refreshes.
-                </p>
-              </div>
-
-              <div className="grid w-full grid-cols-3 gap-3 sm:max-w-md lg:max-w-lg">
-                {[
-                  { label: 'Sections', value: dashboardStats.sections, icon: Layers, hint: 'cohorts' },
-                  { label: 'Sessions', value: dashboardStats.sessions, icon: Grid3X3, hint: 'slots' },
-                  { label: 'Breaks', value: dashboardStats.breaks, icon: Coffee, hint: 'recess' },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-soft backdrop-blur-sm transition hover:border-slate-300/80 hover:shadow-md"
-                  >
-                    <s.icon className="h-4 w-4 text-blue-600 opacity-80" strokeWidth={2} />
-                    <p className="mt-3 text-2xl font-bold tabular-nums tracking-tight text-slate-900">{s.value}</p>
-                    <p className="text-xs font-semibold text-slate-800">{s.label}</p>
-                    <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">{s.hint}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Clock className="h-4 w-4 text-slate-400" />
-                <span>
-                  <span className="font-semibold text-slate-800">{activeSection}</span>
-                  <span className="text-slate-400"> · </span>
-                  {DAY_LABELS.slice(0, num_days).join(', ')} · periods 1–{num_periods}
-                </span>
-              </div>
-              <div
-                className="inline-flex flex-wrap rounded-2xl border border-slate-200/70 bg-slate-100/50 p-1.5 shadow-inner backdrop-blur-sm"
-                role="tablist"
-                aria-label="Section"
+              <button
+                onClick={() => loadTimetable(true)}
+                disabled={loading}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
               >
-                {sections.map((sec) => (
-                  <button
-                    key={sec}
-                    type="button"
-                    role="tab"
-                    aria-selected={sec === activeSection}
-                    onClick={() => setActiveSection(sec)}
-                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
-                      sec === activeSection
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-1 ring-blue-500/20'
-                        : 'text-slate-600 hover:bg-white/90 hover:text-slate-900'
-                    }`}
-                  >
-                    {sec}
-                  </button>
-                ))}
-              </div>
+                <Sparkles className="h-4 w-4" /> Generate Timetable
+              </button>
+              {schedule && (
+                <button
+                  onClick={runExport}
+                  disabled={loading}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Download className="h-4 w-4 text-blue-600" /> Export Excel
+                </button>
+              )}
             </div>
-
-            <div className="flex flex-wrap items-start gap-4 rounded-2xl border border-blue-100/80 bg-gradient-to-r from-blue-50/50 via-white to-indigo-50/40 p-5 shadow-soft">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm ring-1 ring-blue-100">
-                <MousePointerClick className="h-5 w-5" strokeWidth={2} />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Built for real edits</p>
-                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
-                  Tap any class to move it to another day. Empty cells can take an extra session. Export to Excel when
-                  you&apos;re happy — same polished layout.
-                </p>
-              </div>
-            </div>
-
-            <TimetableGrid
-              sectionClasses={sectionClasses}
-              numDays={num_days}
-              numPeriods={num_periods}
-              onEmptySlot={onEmptySlot}
-              onClassClick={onClassClick}
-            />
           </div>
-        )}
-      </main>
+        </header>
 
-      <AddExtraModal
-        open={extraModal !== null}
-        onClose={() => setExtraModal(null)}
-        section={activeSection}
-        coursesForSection={coursesForActiveSection}
-        targetDay={extraModal?.day}
-        loading={loading}
-        onSubmit={handleExtraSubmit}
-      />
+        <main className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
+          <ErrorBanner message={error} onDismiss={() => setError('')} />
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            
+            {/* LEFT COLUMN: Input Builder */}
+            <div className="w-full lg:w-1/3 space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex border-b border-slate-200 bg-slate-50 p-2 gap-2">
+                  <button onClick={() => setInputMode('visual')} className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition ${inputMode === 'visual' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}>
+                    <Settings className="h-4 w-4" /> Visual Builder
+                  </button>
+                  <button onClick={() => setInputMode('json')} className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition ${inputMode === 'json' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}>
+                    <Code className="h-4 w-4" /> Raw JSON
+                  </button>
+                </div>
 
-      <RescheduleModal
-        open={rescheduleModal !== null}
-        onClose={() => setRescheduleModal(null)}
-        classLabel={
-          rescheduleModal
-            ? `${normalizeCourseName(rescheduleModal.cls.course_name)} · Period ${rescheduleModal.cls.period} · ${DAY_LABELS[rescheduleModal.cls.day]}`
-            : ''
-        }
-        numDays={num_days}
-        loading={loading}
-        onSubmit={handleRescheduleSubmit}
-      />
+                <div className="p-4 h-[600px] overflow-y-auto">
+                  {inputMode === 'json' ? (
+                    <textarea 
+                      className="w-full h-full font-mono text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 ring-blue-500 outline-none"
+                      value={jsonInput}
+                      onChange={(e) => setJsonInput(e.target.value)}
+                    />
+                  ) : (
+                    <div className="space-y-8">
+                      {/* Global Settings */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-bold text-slate-800">Global Settings</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-slate-500 font-medium">Working Days</label>
+                            <input type="number" className="builder-input mt-1" value={payload.num_days} onChange={e => setPayload({...payload, num_days: parseInt(e.target.value)})} />
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-500 font-medium">Periods/Day</label>
+                            <input type="number" className="builder-input mt-1" value={payload.num_periods} onChange={e => setPayload({...payload, num_periods: parseInt(e.target.value)})} />
+                          </div>
+                        </div>
+                      </div>
 
-      <footer className="mx-auto max-w-7xl border-t border-slate-200/60 px-4 py-10 text-center sm:px-6 lg:px-8">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
-          AcadFlow · Dev proxy <code className="text-slate-500">/api</code> →{' '}
-          <code className="text-slate-500">127.0.0.1:8000</code>
-        </p>
-      </footer>
+                      {/* Infrastructure (Chips) */}
+                      <div className="space-y-5">
+                        <h4 className="text-sm font-bold text-slate-800">Infrastructure</h4>
+                        
+                        {/* Sections Array */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700">Sections (Classes)</label>
+                          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                            {payload.sections.map((sec, idx) => (
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-100">
+                                {sec}
+                                <button onClick={() => handleRemoveItem('sections', idx)} className="hover:text-indigo-900 transition"><X className="h-3 w-3" /></button>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <input 
+                              className="builder-input flex-1" 
+                              placeholder="Add section (e.g. AIML-A)" 
+                              value={newSection} 
+                              onChange={e => setNewSection(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem('sections', newSection, setNewSection); } }}
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => handleAddItem('sections', newSection, setNewSection)}
+                              className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                            ><Plus className="h-4 w-4" /></button>
+                          </div>
+                        </div>
+
+                        {/* Rooms Array */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700">Rooms (Include 'Lab' for lab rooms)</label>
+                          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                            {payload.rooms.map((room, idx) => (
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
+                                {room}
+                                <button onClick={() => handleRemoveItem('rooms', idx)} className="hover:text-emerald-900 transition"><X className="h-3 w-3" /></button>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <input 
+                              className="builder-input flex-1" 
+                              placeholder="Add room (e.g. Lab 401)" 
+                              value={newRoom} 
+                              onChange={e => setNewRoom(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem('rooms', newRoom, setNewRoom); } }}
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => handleAddItem('rooms', newRoom, setNewRoom)}
+                              className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                            ><Plus className="h-4 w-4" /></button>
+                          </div>
+                        </div>
+
+                        {/* Teachers Array */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700">Teachers</label>
+                          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                            {payload.teachers.map((t, idx) => (
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">
+                                {t}
+                                <button onClick={() => handleRemoveItem('teachers', idx)} className="hover:text-amber-900 transition"><X className="h-3 w-3" /></button>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <input 
+                              className="builder-input flex-1" 
+                              placeholder="Add teacher (e.g. Dr. Smith)" 
+                              value={newTeacher} 
+                              onChange={e => setNewTeacher(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem('teachers', newTeacher, setNewTeacher); } }}
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => handleAddItem('teachers', newTeacher, setNewTeacher)}
+                              className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                            ><Plus className="h-4 w-4" /></button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <hr className="border-slate-200" />
+
+                      {/* Courses */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-bold text-slate-800 flex justify-between items-center">
+                          Courses ({payload.courses.length})
+                        </h4>
+                        
+                        {/* Add Course Form */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Add New Course</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <input placeholder="ID (e.g. CS101)" className="builder-input" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} />
+                            <input placeholder="Name (e.g. Web Dev)" className="builder-input" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
+                            <select className="builder-input" value={newCourse.section} onChange={e => setNewCourse({...newCourse, section: e.target.value})}>
+                              <option value="" disabled>Select Section...</option>
+                              {payload.sections.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            <input placeholder="Teachers (e.g. Dr. Smith, Dr. Lee)" className="builder-input" value={newCourse.teachers} onChange={e => setNewCourse({...newCourse, teachers: e.target.value})} />
+                            <div className="flex items-center gap-2 px-3 border rounded-lg bg-white">
+                              <input type="checkbox" checked={newCourse.is_lab} onChange={e => setNewCourse({...newCourse, is_lab: e.target.checked})} id="islab" className="w-4 h-4 text-blue-600 rounded" />
+                              <label htmlFor="islab" className="text-xs font-medium text-slate-700 cursor-pointer">Is Lab Subject?</label>
+                            </div>
+                            <input type="number" placeholder="Total Hours" className="builder-input" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: parseInt(e.target.value)})} />
+                          </div>
+                          <input placeholder="Elective Group (Leave blank for core subjects)" className="builder-input w-full mt-1" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
+                          <button onClick={handleAddCourse} className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-semibold shadow-sm transition flex justify-center items-center gap-2">
+                            <Plus className="h-4 w-4" /> Save Course to Section
+                          </button>
+                        </div>
+
+                        {/* Course List */}
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {payload.courses.length === 0 && (
+                            <p className="text-xs text-slate-500 italic text-center py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200">No courses added yet.</p>
+                          )}
+                          {payload.courses.slice().reverse().map((c, i) => (
+                            <div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-slate-300 transition">
+                              <div>
+                                <p className="text-sm font-bold text-slate-800">{c.name} <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded ml-1">{c.section}</span></p>
+                                <p className="text-xs text-slate-500 mt-1">{c.is_lab ? 'Lab Room Req.' : 'Theory Room Req.'} · {c.hours} hrs · Taught by: {c.teachers.join(', ')}</p>
+                              </div>
+                              <button onClick={() => handleRemoveCourse(c.id, c.section)} className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition" title="Delete Course">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Output Timetable */}
+            <div className="w-full lg:w-2/3">
+              {!schedule ? (
+                <div className="h-full flex flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white/90 p-10 text-center shadow-soft">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-glow">
+                    <LayoutGrid className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">Configure & Generate</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600 max-w-sm mx-auto">
+                    Use the Visual Builder on the left to set up your sections, rooms, and courses. When ready, click Generate Timetable.
+                  </p>
+                </div>
+              ) : (
+                <div className="animate-fade-up">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-4 sm:mb-0">
+                      <Clock className="h-4 w-4 text-slate-400" />
+                      <span>
+                        <span className="font-semibold text-slate-800">{activeSection}</span>
+                        <span className="text-slate-400"> · </span>
+                        {DAY_LABELS.slice(0, payload.num_days).join(', ')} · periods 1–{payload.num_periods}
+                      </span>
+                    </div>
+                    {sections.length > 0 && (
+                      <div className="inline-flex flex-wrap rounded-2xl border border-slate-200/70 bg-slate-100/50 p-1.5 shadow-inner">
+                        {sections.map((sec) => (
+                          <button
+                            key={sec}
+                            onClick={() => setActiveSection(sec)}
+                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                              sec === activeSection
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                            }`}
+                          >
+                            {sec}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <TimetableGrid
+                    sectionClasses={sectionClasses}
+                    numDays={payload.num_days}
+                    numPeriods={payload.num_periods}
+                    onEmptySlot={(day, period) => setExtraModal({ day, period })}
+                    onClassClick={(cls) => !cls.is_recess && setRescheduleModal({ cls })}
+                  />
+                </div>
+              )}
+            </div>
+
+          </div>
+        </main>
       </div>
     </div>
   )
