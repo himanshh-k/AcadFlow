@@ -13,10 +13,7 @@ from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
 
 app = FastAPI(title="AcadFlow: Intelligent Academic Scheduling and Resource Management")
 
-# ==========================================
-# 1. DATABASE MODELS (API Payloads)
-# ==========================================
-
+# Models
 class Course(BaseModel):
     id: str
     name: str
@@ -59,7 +56,7 @@ class ExportRequest(BaseModel):
     num_days: int = 6
     num_periods: int = 8
 
-# NEW: Extra Class Request Model
+# Extra Class Request Model
 class ExtraClassRequest(BaseModel):
     current_schedule: Dict[str, List[ScheduledClass]]
     course_id: str
@@ -70,10 +67,7 @@ class ExtraClassRequest(BaseModel):
     num_days: int = 6
     num_periods: int = 8
 
-# ==========================================
-# 2. THE AI SOLVER CORE (OR-Tools)
-# ==========================================
-
+# Core solver
 def generate_schedule(data: TimetableRequest) -> dict:
     model = cp_model.CpModel()
     schedule = {}
@@ -104,8 +98,6 @@ def generate_schedule(data: TimetableRequest) -> dict:
             model.Add(total_classes_day > 0).OnlyEnforceIf(is_active)
             model.Add(total_classes_day == 0).OnlyEnforceIf(is_active.Not())
             sec_active_day[(section, d)] = is_active
-
-    # --- ADVANCED CONSTRAINTS ---
 
     # A. STRICT ROOM ASSIGNMENTS
     for c_idx, c in enumerate(data.courses):
@@ -314,7 +306,7 @@ def generate_schedule(data: TimetableRequest) -> dict:
                     for r_idx in range(len(data.rooms)) for p in range(data.num_periods)
                 ) <= 2)
 
-    # --- SOLVE ---
+    # SOLVE
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = 45.0 
     status = solver.Solve(model)
@@ -339,10 +331,7 @@ def generate_schedule(data: TimetableRequest) -> dict:
     else:
         return {"status": "failed", "schedule": None, "message": "Could not find a conflict-free timetable."}
 
-# ==========================================
-# 3. FASTAPI ENDPOINTS
-# ==========================================
-
+# FastAPI endpoints
 @app.post("/api/v1/generate", response_model=TimetableResponse)
 async def create_timetable(request: TimetableRequest):
     try:
@@ -414,12 +403,12 @@ async def schedule_extra_class(request: ExtraClassRequest):
         # Periods are 1-indexed in our JSON (1 to 8)
         for p in range(1, request.num_periods + 1):
             
-            # Check 1: Is the section busy on this day & period?
+            # Check 1: Is the section busy on this day & period
             section_busy = any(c.day == d and c.period == p for c in schedule.get(section, []))
             if section_busy:
                 continue
                 
-            # Check 2: Are the required teachers busy in ANY other section?
+            # Check 2: Are the required teachers busy in ANY other section
             teacher_busy = False
             for sec, classes in schedule.items():
                 for c in classes:
@@ -445,7 +434,7 @@ async def schedule_extra_class(request: ExtraClassRequest):
                     available_rooms.append(r)
             
             if available_rooms:
-                # Success! We found a slot.
+                # Success
                 new_class = ScheduledClass(
                     day=d, period=p, room=available_rooms[0],
                     course_name=target_course.name + " (Extra)", teachers=teachers
@@ -467,10 +456,7 @@ async def schedule_extra_class(request: ExtraClassRequest):
     raise HTTPException(status_code=400, detail="Could not find a conflict-free slot for this extra class. All teachers or suitable rooms are busy.")
 
 
-# ==========================================
-# 4. EXPORT TO EXCEL MODELS & ENDPOINT (Beautiful Format)
-# ==========================================
-
+# Export to Excel
 @app.post("/api/v1/export/excel")
 async def export_schedule_to_excel(request: ExportRequest):
     try:
@@ -534,7 +520,7 @@ async def export_schedule_to_excel(request: ExportRequest):
                     grid[key] = []
                 grid[key].append(c)
 
-            # --- POPULATE THE GRID ---
+            # Fill the grid
             for (day, period), slot_classes in grid.items():
                 row = day + 4
                 col = period + 1
