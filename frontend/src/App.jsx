@@ -34,51 +34,73 @@ const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sat
 const defaultPayload = {
   num_days: 5,
   num_periods: 8,
-  sections: ["AIML-A", "AIML-B", "AIML-C"],
-  teachers: ["NG", "PD", "PA", "PJ", "AP", "PP", "SU", "AL", "ST", "DM", "SL", "SB"],
-  rooms: ["DT 403", "DT 406", "DT 412", "Lab 409", "Lab 411", "Lab 307"],
+  sections: ["AIML-A", "AIML-B", "AIML-C", "DS-A", "DS-B", "DS-C"],
+  teachers: ["NG", "PD", "PA", "PJ", "AP", "PP", "SU", "AL", "ST", "DM", "SL", "SB", "DSA", "DSB", "DSC", "DSD"],
+  rooms: ["DT 403", "DT 406", "DT 412", "Lab 409", "Lab 411", "Lab 307", "DT 301", "DT 310", "DT 304", "Lab 303", "Lab 309"],
   courses: [
-    { id: "CAT6001", name: "DL-1", teachers: ["NG"], section: "AIML-A", hours: 3, is_lab: false, elective_group: null },
-    { id: "CAP6001", name: "DL-1 LAB", teachers: ["NG", "PD"], section: "AIML-A", hours: 2, is_lab: true, elective_group: null },
-    { id: "CAT6002", name: "CV", teachers: ["PA"], section: "AIML-A", hours: 3, is_lab: false, elective_group: null },
-    { id: "CAP6002", name: "CV LAB", teachers: ["PA", "PJ"], section: "AIML-A", hours: 2, is_lab: true, elective_group: null },
-    { id: "CAT6003-1", name: "NLP", teachers: ["AP"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
-    { id: "CAT6003-2", name: "DMW", teachers: ["SU"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
-    { id: "CAP6003-1", name: "NLP LAB", teachers: ["AP", "PP"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
-    { id: "CAP6003-2", name: "DMW LAB", teachers: ["SU", "AL"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
-    { id: "CAT6004-1", name: "BCT", teachers: ["ST"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
-    { id: "CAT6004-2", name: "CRM", teachers: ["SL"], section: "AIML-A", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
-    { id: "CAP6004-1", name: "BCT LAB", teachers: ["ST", "DM"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
-    { id: "CAP6004-2", name: "CRM LAB", teachers: ["SL"], section: "AIML-A", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
-    { id: "CAT6005", name: "IoT", teachers: ["SB"], section: "AIML-A", hours: 2, is_lab: false, elective_group: null },
-    
-    { id: "CAT6001", name: "DL-1", teachers: ["NG"], section: "AIML-B", hours: 3, is_lab: false, elective_group: null },
-    { id: "CAP6001", name: "DL-1 LAB", teachers: ["NG", "PD"], section: "AIML-B", hours: 2, is_lab: true, elective_group: null },
-    { id: "CAT6002", name: "CV", teachers: ["PA"], section: "AIML-B", hours: 3, is_lab: false, elective_group: null },
-    { id: "CAP6002", name: "CV LAB", teachers: ["PA", "PJ"], section: "AIML-B", hours: 2, is_lab: true, elective_group: null },
-    { id: "CAT6003-1", name: "NLP", teachers: ["AP"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
-    { id: "CAT6003-2", name: "DMW", teachers: ["SU"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
-    { id: "CAP6003-1", name: "NLP LAB", teachers: ["AP", "PP"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
-    { id: "CAP6003-2", name: "DMW LAB", teachers: ["SU", "AL"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
-    { id: "CAT6004-1", name: "BCT", teachers: ["ST"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
-    { id: "CAT6004-2", name: "CRM", teachers: ["SL"], section: "AIML-B", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
-    { id: "CAP6004-1", name: "BCT LAB", teachers: ["ST", "DM"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
-    { id: "CAP6004-2", name: "CRM LAB", teachers: ["SL"], section: "AIML-B", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
-    { id: "CAT6005", name: "IoT", teachers: ["SB"], section: "AIML-B", hours: 2, is_lab: false, elective_group: null },
-
-    { id: "CAT6001", name: "DL-1", teachers: ["NG"], section: "AIML-C", hours: 3, is_lab: false, elective_group: null },
-    { id: "CAP6001", name: "DL-1 LAB", teachers: ["NG", "PD"], section: "AIML-C", hours: 2, is_lab: true, elective_group: null },
-    { id: "CAT6002", name: "CV", teachers: ["PA"], section: "AIML-C", hours: 3, is_lab: false, elective_group: null },
-    { id: "CAP6002", name: "CV LAB", teachers: ["PA", "PJ"], section: "AIML-C", hours: 2, is_lab: true, elective_group: null },
-    { id: "CAT6003-1", name: "NLP", teachers: ["AP"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
-    { id: "CAT6003-2", name: "DMW", teachers: ["SU"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6003_Theory" },
-    { id: "CAP6003-1", name: "NLP LAB", teachers: ["AP", "PP"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
-    { id: "CAP6003-2", name: "DMW LAB", teachers: ["SU", "AL"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6003_Lab" },
-    { id: "CAT6004-1", name: "BCT", teachers: ["ST"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
-    { id: "CAT6004-2", name: "CRM", teachers: ["SL"], section: "AIML-C", hours: 3, is_lab: false, elective_group: "Group_6004_Theory" },
-    { id: "CAP6004-1", name: "BCT LAB", teachers: ["ST", "DM"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
-    { id: "CAP6004-2", name: "CRM LAB", teachers: ["SL"], section: "AIML-C", hours: 2, is_lab: true, elective_group: "Group_6004_Lab" },
-    { id: "CAT6005", name: "IoT", teachers: ["SB"], section: "AIML-C", hours: 2, is_lab: false, elective_group: null }
+    {"id":"CAT6001","name":"DL-1","teachers":["NG"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CAP6001","name":"DL-1 LAB","teachers":["NG","PD"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CAT6002","name":"CV","teachers":["PA"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CAP6002","name":"CV LAB","teachers":["PA","PJ"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CAT6003-1","name":"NLP","teachers":["AP"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
+    {"id":"CAT6003-2","name":"DMW","teachers":["SU"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
+    {"id":"CAP6003-1","name":"NLP LAB","teachers":["AP","PP"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
+    {"id":"CAP6003-2","name":"DMW LAB","teachers":["SU","AL"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
+    {"id":"CAT6004-1","name":"BCT","teachers":["ST"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
+    {"id":"CAT6004-2","name":"CRM","teachers":["SL"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
+    {"id":"CAP6004-1","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
+    {"id":"CAP6004-2","name":"CRM LAB","teachers":["SL"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
+    {"id":"CAT6005","name":"IoT","teachers":["SB"],"section":"AIML-A","hours":2,"is_lab":false,"elective_group":null},
+    {"id":"CAT6001B","name":"DL-1","teachers":["NG"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CAP6001B","name":"DL-1 LAB","teachers":["NG","PD"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CAT6002B","name":"CV","teachers":["PA"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CAP6002B","name":"CV LAB","teachers":["PA","PJ"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CAT6003-1B","name":"NLP","teachers":["AP"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
+    {"id":"CAT6003-2B","name":"DMW","teachers":["SU"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
+    {"id":"CAP6003-1B","name":"NLP LAB","teachers":["AP","PP"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
+    {"id":"CAP6003-2B","name":"DMW LAB","teachers":["SU","AL"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
+    {"id":"CAT6004-1B","name":"BCT","teachers":["ST"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
+    {"id":"CAT6004-2B","name":"CRM","teachers":["SL"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
+    {"id":"CAP6004-1B","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
+    {"id":"CAP6004-2B","name":"CRM LAB","teachers":["SL"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
+    {"id":"CAT6005B","name":"IoT","teachers":["SB"],"section":"AIML-B","hours":2,"is_lab":false,"elective_group":null},
+    {"id":"CAT6001C","name":"DL-1","teachers":["NG"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CAP6001C","name":"DL-1 LAB","teachers":["NG","PD"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CAT6002C","name":"CV","teachers":["PA"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CAP6002C","name":"CV LAB","teachers":["PA","PJ"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CAT6003-1C","name":"NLP","teachers":["AP"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
+    {"id":"CAT6003-2C","name":"DMW","teachers":["SU"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
+    {"id":"CAP6003-1C","name":"NLP LAB","teachers":["AP","PP"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
+    {"id":"CAP6003-2C","name":"DMW LAB","teachers":["SU","AL"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
+    {"id":"CAT6004-1C","name":"BCT","teachers":["ST"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
+    {"id":"CAT6004-2C","name":"CRM","teachers":["SL"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
+    {"id":"CAP6004-1C","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
+    {"id":"CAP6004-2C","name":"CRM LAB","teachers":["SL"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
+    {"id":"CAT6005C","name":"IoT","teachers":["SB"],"section":"AIML-C","hours":2,"is_lab":false,"elective_group":null},
+    {"id":"CDT6001A","name":"DS CA","teachers":["DSA"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CDP6001A","name":"DS CA Lab","teachers":["DSA"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CDT6002A","name":"DS CB","teachers":["DSB"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CDP6002A","name":"DS CB Lab","teachers":["DSB"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CDT6003-1A","name":"DS CC-1","teachers":["DSC"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
+    {"id":"CDP6003-1A","name":"DS CC-1 Lab","teachers":["DSC"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
+    {"id":"CDT6003-2A","name":"DS CC-2","teachers":["DSD"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
+    {"id":"CDP6003-2A","name":"DS CC-2 Lab","teachers":["DSD"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
+    {"id":"CDT6001B","name":"DS CA","teachers":["DSA"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CDP6001B","name":"DS CA Lab","teachers":["DSA"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CDT6002B","name":"DS CB","teachers":["DSB"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CDP6002B","name":"DS CB Lab","teachers":["DSB"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CDT6003-1B","name":"DS CC-1","teachers":["DSC"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
+    {"id":"CDP6003-1B","name":"DS CC-1 Lab","teachers":["DSC"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
+    {"id":"CDT6003-2B","name":"DS CC-2","teachers":["DSD"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
+    {"id":"CDP6003-2B","name":"DS CC-2 Lab","teachers":["DSD"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
+    {"id":"CDT6001C","name":"DS CA","teachers":["DSA"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CDP6001C","name":"DS CA Lab","teachers":["DSA"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CDT6002C","name":"DS CB","teachers":["DSB"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":null},
+    {"id":"CDP6002C","name":"DS CB Lab","teachers":["DSB"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":null},
+    {"id":"CDT6003-1C","name":"DS CC-1","teachers":["DSC"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
+    {"id":"CDP6003-1C","name":"DS CC-1 Lab","teachers":["DSC"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
+    {"id":"CDT6003-2C","name":"DS CC-2","teachers":["DSD"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
+    {"id":"CDP6003-2C","name":"DS CC-2 Lab","teachers":["DSD"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"}
   ]
 }
 
@@ -123,14 +145,14 @@ export default function App() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   
-  // NEW: Top Level Navigation State
-  const [activeView, setActiveView] = useState('setup') // 'setup' | 'timetable'
+  // Navigation State
+  const [activeView, setActiveView] = useState('setup') 
   
   const [extraModal, setExtraModal] = useState(null)
   const [rescheduleModal, setRescheduleModal] = useState(null)
 
   // --- BUILDER STATE ---
-  const [inputMode, setInputMode] = useState('visual') // 'visual' | 'json'
+  const [inputMode, setInputMode] = useState('visual') 
   const [payload, setPayload] = useState(defaultPayload)
   const [jsonInput, setJsonInput] = useState(JSON.stringify(defaultPayload, null, 2))
 
@@ -139,8 +161,9 @@ export default function App() {
   const [newRoom, setNewRoom] = useState('')
   const [newTeacher, setNewTeacher] = useState('')
 
+  // Course Form State - Note sections is now an array
   const [newCourse, setNewCourse] = useState({
-    id: '', name: '', teachers: '', section: '', hours: 3, is_lab: false, elective_group: ''
+    id: '', name: '', teachers: '', sections: [], hours: 3, is_lab: false, elective_group: ''
   })
 
   // Sync JSON text to Payload object
@@ -158,11 +181,10 @@ export default function App() {
   useEffect(() => {
     if (payload.sections.length > 0) {
       if (!activeSection) setActiveSection(payload.sections[0])
-      if (!newCourse.section) setNewCourse(prev => ({ ...prev, section: payload.sections[0] }))
     } else {
       setActiveSection('')
     }
-  }, [payload.sections, activeSection, newCourse.section])
+  }, [payload.sections, activeSection])
 
   // --- COMPUTED PROPERTIES ---
   const sections = useMemo(() => (schedule ? Object.keys(schedule).sort() : payload.sections), [schedule, payload.sections])
@@ -187,7 +209,6 @@ export default function App() {
         if (first) setActiveSection(first)
         setInfo(fromButton ? data.message || 'Timetable generated.' : data.message || 'Timetable loaded from backend.')
         
-        // Auto-switch to timetable view on success!
         setActiveView('timetable')
       }
     } catch (e) {
@@ -223,7 +244,7 @@ export default function App() {
     setPayload(emptyPayload)
     setJsonInput(JSON.stringify(emptyPayload, null, 2))
     setActiveSection('')
-    setActiveView('setup') // Switch back to setup on clear
+    setActiveView('setup')
     setInfo('Workspace cleared. Start from scratch.')
   }, [])
 
@@ -259,21 +280,41 @@ export default function App() {
     })
   }
 
+  const toggleCourseSection = (sec) => {
+    setNewCourse(prev => {
+      if (prev.sections.includes(sec)) {
+        return { ...prev, sections: prev.sections.filter(s => s !== sec) }
+      } else {
+        return { ...prev, sections: [...prev.sections, sec] }
+      }
+    })
+  }
+
   const handleAddCourse = () => {
-    if (!newCourse.id || !newCourse.name || !newCourse.section) return alert("ID, Name, and Section are required.")
-    
-    const courseToAdd = {
-      ...newCourse,
-      teachers: newCourse.teachers.split(',').map(t => t.trim()).filter(t => t),
-      elective_group: newCourse.elective_group.trim() || null
+    if (!newCourse.id || !newCourse.name || newCourse.sections.length === 0) {
+      return alert("Course ID, Name, and at least one Section are required.")
     }
+    
+    const teachersArr = newCourse.teachers.split(',').map(t => t.trim()).filter(t => t)
+    const electiveGroup = newCourse.elective_group.trim() || null
+
+    // Create a new distinct course object for EVERY selected section
+    const coursesToAdd = newCourse.sections.map(sec => ({
+      id: newCourse.id, // Using the same ID across sections is fine because OR-Tools uses internal array indices now
+      name: newCourse.name,
+      teachers: teachersArr,
+      section: sec,
+      hours: newCourse.hours,
+      is_lab: newCourse.is_lab,
+      elective_group: electiveGroup
+    }))
 
     setPayload(prev => ({
       ...prev,
-      courses: [...prev.courses, courseToAdd]
+      courses: [...prev.courses, ...coursesToAdd]
     }))
 
-    setNewCourse({ id: '', name: '', teachers: '', section: payload.sections[0] || '', hours: 3, is_lab: false, elective_group: '' })
+    setNewCourse({ id: '', name: '', teachers: '', sections: [], hours: 3, is_lab: false, elective_group: '' })
   }
 
   const handleRemoveCourse = (courseId, section) => {
@@ -340,10 +381,8 @@ export default function App() {
           </div>
         </header>
 
-        {/* Increased max-width here for extreme wide layout */}
         <main className="mx-auto max-w-[1600px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
           
-          {/* TOP TABS - The View Switcher */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 shadow-inner backdrop-blur-sm">
               <button
@@ -373,7 +412,6 @@ export default function App() {
 
           <ErrorBanner message={error} onDismiss={() => setError('')} />
 
-          {/* VIEW 1: CONFIGURATION BUILDER */}
           {activeView === 'setup' && (
             <div className="max-w-4xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -484,32 +522,55 @@ export default function App() {
                         </div>
                       </div>
 
+                      <hr className="border-slate-200" />
+
                       {/* Courses */}
                       <div className="space-y-6">
                         <h4 className="text-sm font-bold text-slate-800 border-b pb-2 flex justify-between items-center">
                           Courses Overview ({payload.courses.length})
                         </h4>
                         
-                        {/* Add Course Form */}
-                        <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                          <p className="text-sm font-bold text-slate-700">Add New Course</p>
+                        {/* Add Course Form - MULTI-SECTION ENABLED */}
+                        <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+                          <p className="text-sm font-bold text-slate-700">Add New Course to Sections</p>
+                          
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input placeholder="Course ID (e.g. CS101)" className="builder-input" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} />
                             <input placeholder="Course Name (e.g. Web Dev)" className="builder-input" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
-                            <select className="builder-input" value={newCourse.section} onChange={e => setNewCourse({...newCourse, section: e.target.value})}>
-                              <option value="" disabled>Assign to Section...</option>
-                              {payload.sections.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            
+                            {/* MULTI-SELECT CHIPS FOR SECTIONS */}
+                            <div className="col-span-1 sm:col-span-2 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                              <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 mb-2">Assign Course to these Sections:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {payload.sections.length === 0 && <span className="text-xs text-slate-400 italic">Add sections in Infrastructure first...</span>}
+                                {payload.sections.map(s => (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => toggleCourseSection(s)}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                      newCourse.sections.includes(s) 
+                                        ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-700' 
+                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                                    }`}
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
                             <input placeholder="Teacher Initials (comma separated)" className="builder-input" value={newCourse.teachers} onChange={e => setNewCourse({...newCourse, teachers: e.target.value})} />
                             <div className="flex items-center gap-3 px-4 border border-slate-200 rounded-lg bg-white">
                               <input type="checkbox" checked={newCourse.is_lab} onChange={e => setNewCourse({...newCourse, is_lab: e.target.checked})} id="islab" className="w-4 h-4 text-blue-600 rounded" />
                               <label htmlFor="islab" className="text-sm font-medium text-slate-700 cursor-pointer">Requires Lab Room</label>
                             </div>
                             <input type="number" placeholder="Total Hours per Week" className="builder-input" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: parseInt(e.target.value)})} />
+                            <input placeholder="Elective Group (Leave blank for core subjects)" className="builder-input" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
                           </div>
-                          <input placeholder="Elective Group (Leave blank for core subjects, e.g. Elective-1)" className="builder-input w-full" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
+                          
                           <button onClick={handleAddCourse} className="w-full mt-2 bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl text-sm font-semibold shadow-md transition flex justify-center items-center gap-2">
-                            <Plus className="h-5 w-5" /> Append Course to Catalog
+                            <Plus className="h-5 w-5" /> Append Course to Selected Sections
                           </button>
                         </div>
 
@@ -522,7 +583,7 @@ export default function App() {
                             <div key={i} className="flex items-center justify-between bg-white border border-slate-200/80 p-4 rounded-xl shadow-sm hover:shadow-md transition">
                               <div>
                                 <p className="text-base font-bold text-slate-800">{c.name} <span className="text-xs text-blue-700 font-semibold bg-blue-100 px-2 py-0.5 rounded-full ml-2 border border-blue-200">{c.section}</span></p>
-                                <p className="text-sm text-slate-500 mt-1">{c.is_lab ? 'Lab' : 'Theory'} · {c.hours} hrs/week · {c.teachers.join(', ')} {c.elective_group && `· ${c.elective_group}`}</p>
+                                <p className="text-xs text-slate-500 mt-1">{c.is_lab ? ' Lab' : ' Theory'} ·  {c.hours} hrs/week ·  {c.teachers.join(', ')} {c.elective_group && `·  ${c.elective_group}`}</p>
                               </div>
                               <button onClick={() => handleRemoveCourse(c.id, c.section)} className="p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition" title="Delete Course">
                                 <Trash2 className="h-5 w-5" />
@@ -539,7 +600,6 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW 2: THE FULL-WIDTH TIMETABLE */}
           {activeView === 'timetable' && schedule && (
             <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-slate-200/60 pb-6">
@@ -584,7 +644,8 @@ export default function App() {
           )}
         </main>
       </div>
-
+      
+      {/* Modals remain structurally the same */}
       <AddExtraModal
         open={extraModal !== null}
         onClose={() => setExtraModal(null)}
@@ -592,7 +653,7 @@ export default function App() {
         coursesForSection={coursesForActiveSection}
         targetDay={extraModal?.day}
         loading={loading}
-        onSubmit={(courseId) => handleExtraSubmit(courseId)} // Pass this to the correct actual handler if implemented fully
+        onSubmit={(courseId) => handleExtraSubmit(courseId)} 
       />
 
       <RescheduleModal
@@ -605,7 +666,7 @@ export default function App() {
         }
         numDays={payload.num_days}
         loading={loading}
-        onSubmit={(day) => handleRescheduleSubmit(day)} // Pass this to the correct actual handler if implemented fully
+        onSubmit={(day) => handleRescheduleSubmit(day)} 
       />
     </div>
   )
