@@ -123,10 +123,13 @@ export default function App() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   
+  // NEW: Top Level Navigation State
+  const [activeView, setActiveView] = useState('setup') // 'setup' | 'timetable'
+  
   const [extraModal, setExtraModal] = useState(null)
   const [rescheduleModal, setRescheduleModal] = useState(null)
 
-  // --- BUILDER STATE (Initializes with defaultPayload) ---
+  // --- BUILDER STATE ---
   const [inputMode, setInputMode] = useState('visual') // 'visual' | 'json'
   const [payload, setPayload] = useState(defaultPayload)
   const [jsonInput, setJsonInput] = useState(JSON.stringify(defaultPayload, null, 2))
@@ -136,7 +139,6 @@ export default function App() {
   const [newRoom, setNewRoom] = useState('')
   const [newTeacher, setNewTeacher] = useState('')
 
-  // New Course Form State
   const [newCourse, setNewCourse] = useState({
     id: '', name: '', teachers: '', section: '', hours: 3, is_lab: false, elective_group: ''
   })
@@ -147,15 +149,12 @@ export default function App() {
       try {
         const parsed = JSON.parse(jsonInput)
         setPayload(parsed)
-      } catch (e) {
-        // Don't update payload if JSON is currently invalid
-      }
+      } catch (e) {}
     } else {
       setJsonInput(JSON.stringify(payload, null, 2))
     }
   }, [jsonInput, inputMode, payload])
 
-  // Default the active section or new course section if sections are added
   useEffect(() => {
     if (payload.sections.length > 0) {
       if (!activeSection) setActiveSection(payload.sections[0])
@@ -187,6 +186,9 @@ export default function App() {
         const first = Object.keys(data.schedule).sort()[0]
         if (first) setActiveSection(first)
         setInfo(fromButton ? data.message || 'Timetable generated.' : data.message || 'Timetable loaded from backend.')
+        
+        // Auto-switch to timetable view on success!
+        setActiveView('timetable')
       }
     } catch (e) {
       setSchedule(null)
@@ -202,7 +204,7 @@ export default function App() {
       const first = Object.keys(saved).sort()[0]
       setSchedule(saved)
       if (first) setActiveSection(first)
-      setInfo('Saved timetable restored.')
+      setInfo('Saved timetable restored in the background.')
     }
   }, [])
 
@@ -221,6 +223,7 @@ export default function App() {
     setPayload(emptyPayload)
     setJsonInput(JSON.stringify(emptyPayload, null, 2))
     setActiveSection('')
+    setActiveView('setup') // Switch back to setup on clear
     setInfo('Workspace cleared. Start from scratch.')
   }, [])
 
@@ -245,7 +248,7 @@ export default function App() {
     if (!payload[field].includes(trimmed)) {
       setPayload(prev => ({ ...prev, [field]: [...prev[field], trimmed] }))
     }
-    setter('') // Clear input after adding
+    setter('') 
   }
 
   const handleRemoveItem = (field, index) => {
@@ -301,7 +304,7 @@ export default function App() {
         )}
 
         <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
                 <LayoutGrid className="h-[18px] w-[18px]" />
@@ -315,14 +318,14 @@ export default function App() {
                 disabled={loading}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
               >
-                <Trash2 className="h-4 w-4" /> Clear All
+                <Trash2 className="h-4 w-4" /> <span className="hidden sm:inline">Clear All</span>
               </button>
               <button
                 onClick={() => loadTimetable(true)}
                 disabled={loading}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
               >
-                <Sparkles className="h-4 w-4" /> Generate Timetable
+                <Sparkles className="h-4 w-4" /> <span className="hidden sm:inline">Generate Timetable</span>
               </button>
               {schedule && (
                 <button
@@ -330,20 +333,49 @@ export default function App() {
                   disabled={loading}
                   className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  <Download className="h-4 w-4 text-blue-600" /> Export Excel
+                  <Download className="h-4 w-4 text-blue-600" /> <span className="hidden sm:inline">Export Excel</span>
                 </button>
               )}
             </div>
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
-          <ErrorBanner message={error} onDismiss={() => setError('')} />
+        {/* Increased max-width here for extreme wide layout */}
+        <main className="mx-auto max-w-[1600px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
           
-          <div className="flex flex-col lg:flex-row gap-8">
-            
-            {/* LEFT COLUMN: Input Builder */}
-            <div className="w-full lg:w-1/3 space-y-4">
+          {/* TOP TABS - The View Switcher */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 shadow-inner backdrop-blur-sm">
+              <button
+                onClick={() => setActiveView('setup')}
+                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  activeView === 'setup'
+                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+                }`}
+              >
+                <Settings className="h-4 w-4" /> 1. Configuration & Data
+              </button>
+              <button
+                onClick={() => schedule && setActiveView('timetable')}
+                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  activeView === 'timetable'
+                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
+                    : !schedule
+                    ? 'text-slate-400 cursor-not-allowed'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+                }`}
+              >
+                <Grid3X3 className="h-4 w-4" /> 2. Generated Timetable
+              </button>
+            </div>
+          </div>
+
+          <ErrorBanner message={error} onDismiss={() => setError('')} />
+
+          {/* VIEW 1: CONFIGURATION BUILDER */}
+          {activeView === 'setup' && (
+            <div className="max-w-4xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="flex border-b border-slate-200 bg-slate-50 p-2 gap-2">
                   <button onClick={() => setInputMode('visual')} className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition ${inputMode === 'visual' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}>
@@ -354,46 +386,46 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="p-4 h-[600px] overflow-y-auto">
+                <div className="p-6">
                   {inputMode === 'json' ? (
                     <textarea 
-                      className="w-full h-full font-mono text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 ring-blue-500 outline-none"
+                      className="w-full h-[600px] font-mono text-xs p-4 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 ring-blue-500 outline-none"
                       value={jsonInput}
                       onChange={(e) => setJsonInput(e.target.value)}
                     />
                   ) : (
-                    <div className="space-y-8">
+                    <div className="space-y-10">
                       {/* Global Settings */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-bold text-slate-800">Global Settings</h4>
-                        <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-bold text-slate-800 border-b pb-2">Global Settings</h4>
+                        <div className="grid grid-cols-2 gap-4 max-w-lg">
                           <div>
                             <label className="text-xs text-slate-500 font-medium">Working Days</label>
                             <input type="number" className="builder-input mt-1" value={payload.num_days} onChange={e => setPayload({...payload, num_days: parseInt(e.target.value)})} />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500 font-medium">Periods/Day</label>
+                            <label className="text-xs text-slate-500 font-medium">Periods per Day</label>
                             <input type="number" className="builder-input mt-1" value={payload.num_periods} onChange={e => setPayload({...payload, num_periods: parseInt(e.target.value)})} />
                           </div>
                         </div>
                       </div>
 
                       {/* Infrastructure (Chips) */}
-                      <div className="space-y-5">
-                        <h4 className="text-sm font-bold text-slate-800">Infrastructure</h4>
+                      <div className="space-y-6">
+                        <h4 className="text-sm font-bold text-slate-800 border-b pb-2">Infrastructure</h4>
                         
                         {/* Sections Array */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700">Sections (Classes)</label>
-                          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                          <label className="text-sm font-semibold text-slate-700">Sections (Classes)</label>
+                          <div className="flex flex-wrap gap-2 mt-2 mb-3">
                             {payload.sections.map((sec, idx) => (
-                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-100">
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium border border-indigo-100">
                                 {sec}
-                                <button onClick={() => handleRemoveItem('sections', idx)} className="hover:text-indigo-900 transition"><X className="h-3 w-3" /></button>
+                                <button onClick={() => handleRemoveItem('sections', idx)} className="hover:text-indigo-900 transition bg-white/50 rounded-full p-0.5"><X className="h-3 w-3" /></button>
                               </span>
                             ))}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 max-w-lg">
                             <input 
                               className="builder-input flex-1" 
                               placeholder="Add section (e.g. AIML-A)" 
@@ -401,26 +433,22 @@ export default function App() {
                               onChange={e => setNewSection(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem('sections', newSection, setNewSection); } }}
                             />
-                            <button 
-                              type="button" 
-                              onClick={() => handleAddItem('sections', newSection, setNewSection)}
-                              className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
-                            ><Plus className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => handleAddItem('sections', newSection, setNewSection)} className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"><Plus className="h-5 w-5" /></button>
                           </div>
                         </div>
 
                         {/* Rooms Array */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700">Rooms (Include 'Lab' for lab rooms)</label>
-                          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                          <label className="text-sm font-semibold text-slate-700">Rooms <span className="font-normal text-xs text-slate-400 ml-2">(Must include 'Lab' for laboratory rooms)</span></label>
+                          <div className="flex flex-wrap gap-2 mt-2 mb-3">
                             {payload.rooms.map((room, idx) => (
-                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100">
                                 {room}
-                                <button onClick={() => handleRemoveItem('rooms', idx)} className="hover:text-emerald-900 transition"><X className="h-3 w-3" /></button>
+                                <button onClick={() => handleRemoveItem('rooms', idx)} className="hover:text-emerald-900 transition bg-white/50 rounded-full p-0.5"><X className="h-3 w-3" /></button>
                               </span>
                             ))}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 max-w-lg">
                             <input 
                               className="builder-input flex-1" 
                               placeholder="Add room (e.g. Lab 401)" 
@@ -428,26 +456,22 @@ export default function App() {
                               onChange={e => setNewRoom(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem('rooms', newRoom, setNewRoom); } }}
                             />
-                            <button 
-                              type="button" 
-                              onClick={() => handleAddItem('rooms', newRoom, setNewRoom)}
-                              className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
-                            ><Plus className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => handleAddItem('rooms', newRoom, setNewRoom)} className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"><Plus className="h-5 w-5" /></button>
                           </div>
                         </div>
 
                         {/* Teachers Array */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700">Teachers</label>
-                          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                          <label className="text-sm font-semibold text-slate-700">Teachers</label>
+                          <div className="flex flex-wrap gap-2 mt-2 mb-3">
                             {payload.teachers.map((t, idx) => (
-                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium border border-amber-100">
                                 {t}
-                                <button onClick={() => handleRemoveItem('teachers', idx)} className="hover:text-amber-900 transition"><X className="h-3 w-3" /></button>
+                                <button onClick={() => handleRemoveItem('teachers', idx)} className="hover:text-amber-900 transition bg-white/50 rounded-full p-0.5"><X className="h-3 w-3" /></button>
                               </span>
                             ))}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 max-w-lg">
                             <input 
                               className="builder-input flex-1" 
                               placeholder="Add teacher (e.g. Dr. Smith)" 
@@ -455,59 +479,53 @@ export default function App() {
                               onChange={e => setNewTeacher(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem('teachers', newTeacher, setNewTeacher); } }}
                             />
-                            <button 
-                              type="button" 
-                              onClick={() => handleAddItem('teachers', newTeacher, setNewTeacher)}
-                              className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
-                            ><Plus className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => handleAddItem('teachers', newTeacher, setNewTeacher)} className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"><Plus className="h-5 w-5" /></button>
                           </div>
                         </div>
                       </div>
 
-                      <hr className="border-slate-200" />
-
                       {/* Courses */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-bold text-slate-800 flex justify-between items-center">
-                          Courses ({payload.courses.length})
+                      <div className="space-y-6">
+                        <h4 className="text-sm font-bold text-slate-800 border-b pb-2 flex justify-between items-center">
+                          Courses Overview ({payload.courses.length})
                         </h4>
                         
                         {/* Add Course Form */}
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Add New Course</p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <input placeholder="ID (e.g. CS101)" className="builder-input" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} />
-                            <input placeholder="Name (e.g. Web Dev)" className="builder-input" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
+                        <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                          <p className="text-sm font-bold text-slate-700">Add New Course</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input placeholder="Course ID (e.g. CS101)" className="builder-input" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} />
+                            <input placeholder="Course Name (e.g. Web Dev)" className="builder-input" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
                             <select className="builder-input" value={newCourse.section} onChange={e => setNewCourse({...newCourse, section: e.target.value})}>
-                              <option value="" disabled>Select Section...</option>
+                              <option value="" disabled>Assign to Section...</option>
                               {payload.sections.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
-                            <input placeholder="Teachers (e.g. Dr. Smith, Dr. Lee)" className="builder-input" value={newCourse.teachers} onChange={e => setNewCourse({...newCourse, teachers: e.target.value})} />
-                            <div className="flex items-center gap-2 px-3 border rounded-lg bg-white">
+                            <input placeholder="Teacher Initials (comma separated)" className="builder-input" value={newCourse.teachers} onChange={e => setNewCourse({...newCourse, teachers: e.target.value})} />
+                            <div className="flex items-center gap-3 px-4 border border-slate-200 rounded-lg bg-white">
                               <input type="checkbox" checked={newCourse.is_lab} onChange={e => setNewCourse({...newCourse, is_lab: e.target.checked})} id="islab" className="w-4 h-4 text-blue-600 rounded" />
-                              <label htmlFor="islab" className="text-xs font-medium text-slate-700 cursor-pointer">Is Lab Subject?</label>
+                              <label htmlFor="islab" className="text-sm font-medium text-slate-700 cursor-pointer">Requires Lab Room</label>
                             </div>
-                            <input type="number" placeholder="Total Hours" className="builder-input" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: parseInt(e.target.value)})} />
+                            <input type="number" placeholder="Total Hours per Week" className="builder-input" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: parseInt(e.target.value)})} />
                           </div>
-                          <input placeholder="Elective Group (Leave blank for core subjects)" className="builder-input w-full mt-1" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
-                          <button onClick={handleAddCourse} className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-semibold shadow-sm transition flex justify-center items-center gap-2">
-                            <Plus className="h-4 w-4" /> Save Course to Section
+                          <input placeholder="Elective Group (Leave blank for core subjects, e.g. Elective-1)" className="builder-input w-full" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
+                          <button onClick={handleAddCourse} className="w-full mt-2 bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl text-sm font-semibold shadow-md transition flex justify-center items-center gap-2">
+                            <Plus className="h-5 w-5" /> Append Course to Catalog
                           </button>
                         </div>
 
                         {/* Course List */}
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <div className="space-y-3">
                           {payload.courses.length === 0 && (
-                            <p className="text-xs text-slate-500 italic text-center py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200">No courses added yet.</p>
+                            <p className="text-sm text-slate-500 italic text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">No courses mapped yet. Use the form above.</p>
                           )}
                           {payload.courses.slice().reverse().map((c, i) => (
-                            <div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-slate-300 transition">
+                            <div key={i} className="flex items-center justify-between bg-white border border-slate-200/80 p-4 rounded-xl shadow-sm hover:shadow-md transition">
                               <div>
-                                <p className="text-sm font-bold text-slate-800">{c.name} <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded ml-1">{c.section}</span></p>
-                                <p className="text-xs text-slate-500 mt-1">{c.is_lab ? 'Lab Room Req.' : 'Theory Room Req.'} · {c.hours} hrs · Taught by: {c.teachers.join(', ')}</p>
+                                <p className="text-base font-bold text-slate-800">{c.name} <span className="text-xs text-blue-700 font-semibold bg-blue-100 px-2 py-0.5 rounded-full ml-2 border border-blue-200">{c.section}</span></p>
+                                <p className="text-sm text-slate-500 mt-1">{c.is_lab ? 'Lab' : 'Theory'} · {c.hours} hrs/week · {c.teachers.join(', ')} {c.elective_group && `· ${c.elective_group}`}</p>
                               </div>
-                              <button onClick={() => handleRemoveCourse(c.id, c.section)} className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition" title="Delete Course">
-                                <Trash2 className="h-4 w-4" />
+                              <button onClick={() => handleRemoveCourse(c.id, c.section)} className="p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition" title="Delete Course">
+                                <Trash2 className="h-5 w-5" />
                               </button>
                             </div>
                           ))}
@@ -519,63 +537,76 @@ export default function App() {
                 </div>
               </div>
             </div>
+          )}
 
-            {/* RIGHT COLUMN: Output Timetable */}
-            <div className="w-full lg:w-2/3">
-              {!schedule ? (
-                <div className="h-full flex flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white/90 p-10 text-center shadow-soft">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-glow">
-                    <LayoutGrid className="h-8 w-8" />
+          {/* VIEW 2: THE FULL-WIDTH TIMETABLE */}
+          {activeView === 'timetable' && schedule && (
+            <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-slate-200/60 pb-6">
+                <div className="flex items-center gap-3 text-sm text-slate-500 mb-4 sm:mb-0">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100/50">
+                    <Clock className="h-5 w-5" strokeWidth={2} />
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-bold text-slate-800 leading-tight">Section: {activeSection}</span>
+                    <span className="text-sm text-slate-400">{DAY_LABELS.slice(0, payload.num_days).join(', ')} · periods 1–{payload.num_periods}</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900">Configure & Generate</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600 max-w-sm mx-auto">
-                    Use the Visual Builder on the left to set up your sections, rooms, and courses. When ready, click Generate Timetable.
-                  </p>
                 </div>
-              ) : (
-                <div className="animate-fade-up">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-4 sm:mb-0">
-                      <Clock className="h-4 w-4 text-slate-400" />
-                      <span>
-                        <span className="font-semibold text-slate-800">{activeSection}</span>
-                        <span className="text-slate-400"> · </span>
-                        {DAY_LABELS.slice(0, payload.num_days).join(', ')} · periods 1–{payload.num_periods}
-                      </span>
-                    </div>
-                    {sections.length > 0 && (
-                      <div className="inline-flex flex-wrap rounded-2xl border border-slate-200/70 bg-slate-100/50 p-1.5 shadow-inner">
-                        {sections.map((sec) => (
-                          <button
-                            key={sec}
-                            onClick={() => setActiveSection(sec)}
-                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
-                              sec === activeSection
-                                ? 'bg-blue-600 text-white shadow-md'
-                                : 'text-slate-600 hover:bg-white hover:text-slate-900'
-                            }`}
-                          >
-                            {sec}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                {sections.length > 0 && (
+                  <div className="inline-flex flex-wrap rounded-2xl border border-slate-200/70 bg-slate-100/50 p-1.5 shadow-inner">
+                    {sections.map((sec) => (
+                      <button
+                        key={sec}
+                        onClick={() => setActiveSection(sec)}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
+                          sec === activeSection
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                        }`}
+                      >
+                        {sec}
+                      </button>
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  <TimetableGrid
-                    sectionClasses={sectionClasses}
-                    numDays={payload.num_days}
-                    numPeriods={payload.num_periods}
-                    onEmptySlot={(day, period) => setExtraModal({ day, period })}
-                    onClassClick={(cls) => !cls.is_recess && setRescheduleModal({ cls })}
-                  />
-                </div>
-              )}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xl">
+                <TimetableGrid
+                  sectionClasses={sectionClasses}
+                  numDays={payload.num_days}
+                  numPeriods={payload.num_periods}
+                  onEmptySlot={(day, period) => setExtraModal({ day, period })}
+                  onClassClick={(cls) => !cls.is_recess && setRescheduleModal({ cls })}
+                />
+              </div>
             </div>
-
-          </div>
+          )}
         </main>
       </div>
+
+      <AddExtraModal
+        open={extraModal !== null}
+        onClose={() => setExtraModal(null)}
+        section={activeSection}
+        coursesForSection={coursesForActiveSection}
+        targetDay={extraModal?.day}
+        loading={loading}
+        onSubmit={(courseId) => handleExtraSubmit(courseId)} // Pass this to the correct actual handler if implemented fully
+      />
+
+      <RescheduleModal
+        open={rescheduleModal !== null}
+        onClose={() => setRescheduleModal(null)}
+        classLabel={
+          rescheduleModal
+            ? `${normalizeCourseName(rescheduleModal.cls.course_name)} · Period ${rescheduleModal.cls.period} · ${DAY_LABELS[rescheduleModal.cls.day]}`
+            : ''
+        }
+        numDays={payload.num_days}
+        loading={loading}
+        onSubmit={(day) => handleRescheduleSubmit(day)} // Pass this to the correct actual handler if implemented fully
+      />
     </div>
   )
 }
