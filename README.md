@@ -27,10 +27,11 @@ cd Backend
 uvicorn main:app --reload
 ```
 
-**5. Test the API**<br>
-Once the server is running, open your browser and navigate to:
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) 
-
-**6. Test custom json file**<br>
-Expand /api/v1/generate<br>
-Click "Try it out" and paste json content to generate a timetable
+**5. Start Frontend**<br>
+```
+cd ..\Frontend
+npm install
+npm run dev
+```
+Click [here](http://localhost:5174) to access the site.
+If that didn't work, navigate to the localhost mentioned in the terminal where frontend was started
