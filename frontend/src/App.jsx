@@ -34,8 +34,8 @@ const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sat
 const defaultPayload = {
   num_days: 5,
   num_periods: 8,
-  sections: ["AIML-A", "AIML-B", "AIML-C", "DS-A", "DS-B", "DS-C"],
-  teachers: ["NG", "PD", "PA", "PJ", "AP", "PP", "SU", "AL", "ST", "DM", "SL", "SB", "DSA", "DSB", "DSC", "DSD"],
+  sections: ["AIML-A", "AIML-B", "AIML-C"],
+  teachers: ["NG", "PD", "PA", "PJ", "AP", "PP", "SU", "AL", "ST", "DM", "SL", "SB"],
   rooms: ["DT 403", "DT 406", "DT 412", "Lab 409", "Lab 411", "Lab 307", "DT 301", "DT 310", "DT 304", "Lab 303", "Lab 309"],
   courses: [
     {"id":"CAT6001","name":"DL-1","teachers":["NG"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":null},
@@ -76,31 +76,7 @@ const defaultPayload = {
     {"id":"CAT6004-2C","name":"CRM","teachers":["SL"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
     {"id":"CAP6004-1C","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
     {"id":"CAP6004-2C","name":"CRM LAB","teachers":["SL"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAT6005C","name":"IoT","teachers":["SB"],"section":"AIML-C","hours":2,"is_lab":false,"elective_group":null},
-    {"id":"CDT6001A","name":"DS CA","teachers":["DSA"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CDP6001A","name":"DS CA Lab","teachers":["DSA"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CDT6002A","name":"DS CB","teachers":["DSB"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CDP6002A","name":"DS CB Lab","teachers":["DSB"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CDT6003-1A","name":"DS CC-1","teachers":["DSC"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
-    {"id":"CDP6003-1A","name":"DS CC-1 Lab","teachers":["DSC"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
-    {"id":"CDT6003-2A","name":"DS CC-2","teachers":["DSD"],"section":"DS-A","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
-    {"id":"CDP6003-2A","name":"DS CC-2 Lab","teachers":["DSD"],"section":"DS-A","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
-    {"id":"CDT6001B","name":"DS CA","teachers":["DSA"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CDP6001B","name":"DS CA Lab","teachers":["DSA"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CDT6002B","name":"DS CB","teachers":["DSB"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CDP6002B","name":"DS CB Lab","teachers":["DSB"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CDT6003-1B","name":"DS CC-1","teachers":["DSC"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
-    {"id":"CDP6003-1B","name":"DS CC-1 Lab","teachers":["DSC"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
-    {"id":"CDT6003-2B","name":"DS CC-2","teachers":["DSD"],"section":"DS-B","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
-    {"id":"CDP6003-2B","name":"DS CC-2 Lab","teachers":["DSD"],"section":"DS-B","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
-    {"id":"CDT6001C","name":"DS CA","teachers":["DSA"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CDP6001C","name":"DS CA Lab","teachers":["DSA"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CDT6002C","name":"DS CB","teachers":["DSB"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CDP6002C","name":"DS CB Lab","teachers":["DSB"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CDT6003-1C","name":"DS CC-1","teachers":["DSC"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
-    {"id":"CDP6003-1C","name":"DS CC-1 Lab","teachers":["DSC"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"},
-    {"id":"CDT6003-2C","name":"DS CC-2","teachers":["DSD"],"section":"DS-C","hours":3,"is_lab":false,"elective_group":"Group_6003DS_Theory"},
-    {"id":"CDP6003-2C","name":"DS CC-2 Lab","teachers":["DSD"],"section":"DS-C","hours":2,"is_lab":true,"elective_group":"Group_6003DS_Lab"}
+    {"id":"CAT6005C","name":"IoT","teachers":["SB"],"section":"AIML-C","hours":2,"is_lab":false,"elective_group":null}
   ]
 }
 
@@ -120,21 +96,6 @@ function normalizeCourseName(name) {
 function findCourseForClass(cls, section, catalog) {
   const base = normalizeCourseName(cls.course_name)
   return catalog.find((c) => c.section === section && c.name === base)
-}
-
-const SCHEDULE_STORAGE_KEY = 'acadflow_schedule_v1'
-
-function loadScheduleFromStorage() {
-  try {
-    const raw = localStorage.getItem(SCHEDULE_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
-    if (Object.keys(parsed).length === 0) return null
-    return parsed
-  } catch {
-    return null
-  }
 }
 
 export default function App() {
@@ -219,27 +180,7 @@ export default function App() {
     }
   }, [payload])
 
-  useEffect(() => {
-    const saved = loadScheduleFromStorage()
-    if (saved) {
-      const first = Object.keys(saved).sort()[0]
-      setSchedule(saved)
-      if (first) setActiveSection(first)
-      setInfo('Saved timetable restored in the background.')
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!schedule) return
-    try {
-      localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(schedule))
-    } catch (e) {
-      console.warn('acadflow: could not persist schedule', e)
-    }
-  }, [schedule])
-
   const clearSavedAndRegenerate = useCallback(async () => {
-    try { localStorage.removeItem(SCHEDULE_STORAGE_KEY) } catch { }
     setSchedule(null)
     setPayload(emptyPayload)
     setJsonInput(JSON.stringify(emptyPayload, null, 2))
@@ -327,9 +268,9 @@ export default function App() {
   return (
     <div className="acadflow-page-bg acadflow-grid-noise relative min-h-screen">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-blue-400/[0.12] blur-3xl" />
-        <div className="absolute -right-20 top-40 h-[22rem] w-[22rem] rounded-full bg-indigo-500/[0.1] blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-slate-300/[0.15] blur-3xl" />
+        <div className="absolute -left-32 top-20 h-80 w-80 rounded-full" style={{ background: 'radial-gradient(circle, rgba(96, 165, 250, 0.12) 0%, transparent 70%)' }} />
+        <div className="absolute -right-20 top-40 h-[22rem] w-[22rem] rounded-full" style={{ background: 'radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full" style={{ background: 'radial-gradient(circle, rgba(203, 213, 225, 0.15) 0%, transparent 70%)' }} />
       </div>
 
       <div className="relative">

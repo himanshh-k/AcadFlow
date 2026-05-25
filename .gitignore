@@ -8,3 +8,12 @@ __pycache__/
 
 # VS Code settings
 .vscode/
+
+# node modules
+node_modules/
+
+# redundant graphs and others
+acadflow_performance_graphs.png
+acadflow_performance_results.csv
+evaluation.py
+plot_results.py

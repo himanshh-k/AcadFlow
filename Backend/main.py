@@ -145,6 +145,14 @@ def generate_schedule(data: TimetableRequest) -> dict:
                 if p not in [2, 3]:
                     model.Add(recess[(section, d, p)] == 0)
 
+            # Ensure the day doesn't start or end with recess
+            # (Early start already guarantees it doesn't start with recess, but we ensure it doesn't end with it here)
+            classes_after_2 = sum(schedule[(i, r_idx, d, p)] for i in c_indices for r_idx in range(len(data.rooms)) for p in range(3, data.num_periods))
+            classes_after_3 = sum(schedule[(i, r_idx, d, p)] for i in c_indices for r_idx in range(len(data.rooms)) for p in range(4, data.num_periods))
+            
+            model.Add(classes_after_2 > 0).OnlyEnforceIf(recess[(section, d, 2)])
+            model.Add(classes_after_3 > 0).OnlyEnforceIf(recess[(section, d, 3)])
+
             active_periods_vars = []
             for p in range(data.num_periods):
                 period_active = model.NewBoolVar(f"sec_{section}_d{d}_p{p}_active_cutoff")
@@ -317,7 +325,7 @@ def generate_schedule(data: TimetableRequest) -> dict:
 
     # SOLVE
     solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = 45.0 
+    solver.parameters.max_time_in_seconds = 90.0
     status = solver.Solve(model)
 
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
