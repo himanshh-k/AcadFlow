@@ -33,5 +33,5 @@ cd ..\Frontend
 npm install
 npm run dev
 ```
-Click [here](http://localhost:5174) to access the site.
+Click [here](http://localhost:5174) to access the site. <br>
 If that didn't work, navigate to the localhost mentioned in the terminal where frontend was started
