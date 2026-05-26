@@ -51,7 +51,7 @@ function OrDivider() {
 function ClassCard({ cls, onClassClick }) {
   if (cls.is_recess) {
     return (
-      <div className="w-full h-full min-h-[3.5rem] flex items-center justify-center bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,rgba(0,0,0,0.03)_6px,rgba(0,0,0,0.03)_12px)] text-[9px] font-bold uppercase tracking-[0.25em] text-slate-500 rounded border border-slate-200/80">
+      <div className="w-full h-full min-h-[3.5rem] flex items-center justify-center bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,rgba(0,0,0,0.03)_6px,rgba(0,0,0,0.03)_12px)] text-xs font-bold uppercase tracking-[0.25em] text-slate-500 rounded border border-slate-200/80">
         Break
       </div>
     )
@@ -79,18 +79,18 @@ function ClassCard({ cls, onClassClick }) {
       onClick={() => onClassClick(cls)}
       className={`group relative w-full h-full min-h-[3.5rem] rounded border p-2 text-left transition-all ${bgStyle} flex flex-col`}
     >
-      <div className="flex items-start gap-1 pr-6 mb-auto">
+      <div className="flex items-start gap-1.5 pr-6 mb-auto">
         <div className="mt-[3px]"><Icon /></div>
-        <p className="text-[10px] font-bold leading-tight tracking-tight line-clamp-3">{title}</p>
+        <p className="text-xs font-bold leading-tight tracking-tight line-clamp-3">{title}</p>
       </div>
       
-      <div className={`absolute top-1 right-1 px-1 rounded text-[8px] font-extrabold tracking-wider ${extra || rescheduled ? 'bg-slate-700/80 text-slate-300' : 'bg-slate-200/50 text-slate-500'}`}>
+      <div className={`absolute top-1 right-1 px-1 rounded text-[10px] font-extrabold tracking-wider ${extra || rescheduled ? 'bg-slate-700/80 text-slate-300' : 'bg-slate-200/50 text-slate-500'}`}>
         {cls.room}
       </div>
 
       {/* Hidden Teacher Name, revealed entirely on hover */}
-      <div className="mt-2 h-0 opacity-0 transform translate-y-1 transition-all duration-300 group-hover:h-3 group-hover:opacity-100 group-hover:translate-y-0 overflow-hidden">
-        <p className={`text-[8px] font-semibold tracking-wide truncate ${extra || rescheduled ? 'text-slate-400' : 'text-slate-500'}`}>
+      <div className="mt-2 h-0 opacity-0 transform translate-y-1 transition-all duration-300 group-hover:h-4 group-hover:opacity-100 group-hover:translate-y-0 overflow-hidden">
+        <p className={`text-[10px] font-semibold tracking-wide truncate ${extra || rescheduled ? 'text-slate-400' : 'text-slate-500'}`}>
           {cls.teachers?.join(', ') || '—'}
         </p>
       </div>
