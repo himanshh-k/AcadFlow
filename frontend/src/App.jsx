@@ -586,7 +586,7 @@ export default function App() {
           <ErrorBanner message={error} onDismiss={() => setError('')} />
 
           {activeView === 'setup' && (
-            <div className="max-w-4xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="max-w-[1400px] mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="flex border-b border-slate-200 bg-slate-50 p-2 gap-2">
                   <button onClick={() => setInputMode('visual')} className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition ${inputMode === 'visual' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}>
@@ -605,9 +605,11 @@ export default function App() {
                       onChange={(e) => setJsonInput(e.target.value)}
                     />
                   ) : (
-                    <div className="space-y-10">
-                      {/* Global Settings */}
-                      <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                      {/* Left Column: Configuration */}
+                      <div className="space-y-10">
+                        {/* Global Settings */}
+                        <div className="space-y-4">
                         <h4 className="text-sm font-bold text-slate-800 border-b pb-2">Global Settings</h4>
                         <div className="grid grid-cols-2 gap-4 max-w-lg">
                           <div>
@@ -841,28 +843,34 @@ export default function App() {
                             </>
                           )}
                         </div>
+                      </div>
+                    </div>
 
-                        {/* Course List */}
-                        <div className="space-y-3">
-                          {payload.courses.length === 0 && (
-                            <p className="text-sm text-slate-500 italic text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">No courses mapped yet. Use the form above.</p>
-                          )}
-                          {payload.courses.slice().reverse().map((c, i) => (
-                            <div key={i} className="flex items-center justify-between bg-white border border-slate-200/80 p-4 rounded-xl shadow-sm hover:shadow-md transition">
-                              <div>
-                                <p className="text-base font-bold text-slate-800">{c.name} <span className="text-xs text-blue-700 font-semibold bg-blue-100 px-2 py-0.5 rounded-full ml-2 border border-blue-200">{c.section}</span></p>
-                                <p className="text-xs text-slate-500 mt-1">{c.is_lab ? ' Lab' : ' Theory'} ·  {c.hours} hrs/week ·  {c.teachers.join(', ')} {c.elective_group && `·  ${c.elective_group}`}</p>
+                    {/* Right Column: Course List */}
+                    <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-100 flex flex-col h-[calc(100vh-120px)] sticky top-6 overflow-hidden">
+                          <h4 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-3 mb-4 flex justify-between items-center">
+                            <span>Added Courses</span>
+                            <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{payload.courses.length} Total</span>
+                          </h4>
+                          <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                            {payload.courses.length === 0 && (
+                              <p className="text-sm text-slate-500 italic text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">No courses mapped yet.</p>
+                            )}
+                            {payload.courses.slice().reverse().map((c, i) => (
+                              <div key={i} className="flex items-center justify-between bg-white border border-slate-200/80 p-4 rounded-xl shadow-sm hover:shadow-md transition">
+                                <div>
+                                  <p className="text-base font-bold text-slate-800">{c.name} <span className="text-xs text-blue-700 font-semibold bg-blue-100 px-2 py-0.5 rounded-full ml-2 border border-blue-200">{c.section}</span></p>
+                                  <p className="text-xs text-slate-500 mt-1">{c.is_lab ? ' Lab' : ' Theory'} ·  {c.hours} hrs/week ·  {c.teachers.join(', ')} {c.elective_group && `·  ${c.elective_group}`}</p>
+                                </div>
+                                <button onClick={() => handleRemoveCourse(c.id, c.section)} className="p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition" title="Delete Course">
+                                  <Trash2 className="h-5 w-5" />
+                                </button>
                               </div>
-                              <button onClick={() => handleRemoveCourse(c.id, c.section)} className="p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition" title="Delete Course">
-                                <Trash2 className="h-5 w-5" />
-                              </button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       </div>
-
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             </div>
