@@ -15,7 +15,8 @@ import {
   Plus,
   Settings,
   Code,
-  X
+  X,
+  Undo2
 } from 'lucide-react'
 import {
   generateTimetable,
@@ -101,6 +102,7 @@ function findCourseForClass(cls, section, catalog) {
 export default function App() {
   // --- STATE ---
   const [schedule, setSchedule] = useState(null)
+  const [history, setHistory] = useState([])
   const [activeSection, setActiveSection] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -166,6 +168,7 @@ export default function App() {
       const data = await generateTimetable(payload)
       if (data.status === 'success' && data.schedule) {
         setSchedule(data.schedule)
+        setHistory([])
         const first = Object.keys(data.schedule).sort()[0]
         if (first) setActiveSection(first)
         setInfo(fromButton ? data.message || 'Timetable generated.' : data.message || 'Timetable loaded from backend.')
@@ -182,6 +185,7 @@ export default function App() {
 
   const clearSavedAndRegenerate = useCallback(async () => {
     setSchedule(null)
+    setHistory([])
     setPayload(emptyPayload)
     setJsonInput(JSON.stringify(emptyPayload, null, 2))
     setActiveSection('')
@@ -263,6 +267,189 @@ export default function App() {
       ...prev,
       courses: prev.courses.filter(c => !(c.id === courseId && c.section === section))
     }))
+  }
+
+  const handleExtraSubmitLocal = (targetDayIndex, courseId) => {
+    const course = payload.courses.find(c => c.id === courseId && c.section === activeSection)
+    if (!course) return
+    
+    const existingClasses = schedule[activeSection] || []
+    const dayClasses = existingClasses.filter(c => c.day === parseInt(targetDayIndex))
+    
+    const isLab = course.is_lab || course.name.toLowerCase().includes('lab')
+    const duration = isLab ? 2 : 1
+    
+    const targetTeachers = course.teachers || []
+    let freePeriodStart = null
+    
+    for (let p = 1; p <= payload.num_periods - duration + 1; p++) {
+       let valid = true
+       for (let i = 0; i < duration; i++) {
+         const checkP = p + i
+         const sectionOccupied = dayClasses.some(c => c.period === checkP)
+         if (sectionOccupied) { valid = false; break; }
+         
+         let teacherOccupied = false
+         for (const sec of Object.keys(schedule)) {
+            const secClasses = schedule[sec] || []
+            const clash = secClasses.find(c => c.day === parseInt(targetDayIndex) && c.period === checkP && !c.is_recess)
+            if (clash && clash.teachers && clash.teachers.some(t => targetTeachers.includes(t))) {
+               teacherOccupied = true
+               break
+            }
+         }
+         if (teacherOccupied) { valid = false; break; }
+       }
+       
+       if (valid) {
+         freePeriodStart = p
+         break
+       }
+    }
+    
+    if (freePeriodStart === null) {
+      setError(`No free ${duration}-period slot available on ${DAY_LABELS[targetDayIndex]} where the teacher is also free.`)
+      return
+    }
+    
+    const newClasses = []
+    for (let i = 0; i < duration; i++) {
+      newClasses.push({
+        course_name: course.name + ' (Extra)',
+        room: payload.rooms[0],
+        teachers: course.teachers,
+        day: parseInt(targetDayIndex),
+        period: freePeriodStart + i,
+        is_recess: false,
+        section: activeSection
+      })
+    }
+    
+    setHistory(prev => [...prev, schedule])
+    
+    setSchedule(prev => ({
+      ...prev,
+      [activeSection]: [...(prev[activeSection] || []), ...newClasses]
+    }))
+    
+    setInfo(`Scheduled ${course.name} on ${DAY_LABELS[targetDayIndex]}, Periods ${freePeriodStart}${isLab ? '-' + (freePeriodStart + 1) : ''}.`)
+    setExtraModal(null)
+  }
+
+  const handleRescheduleSubmitLocal = (targetDay) => {
+    if (!rescheduleModal) return
+    const { cls } = rescheduleModal
+    setError('')
+    
+    const sectionToUpdate = cls.section || activeSection
+    const existingClasses = schedule[sectionToUpdate] || []
+    
+    const isLab = cls.room?.toLowerCase().includes('lab') || /\bLAB\b/i.test(cls.course_name || '')
+    const duration = isLab ? 2 : 1
+    
+    const originalSessionParts = existingClasses.filter(c => 
+      c.course_name === cls.course_name && c.day === cls.day
+    )
+    
+    const targetDayClasses = existingClasses.filter(c => c.day === parseInt(targetDay))
+    const targetTeachers = cls.teachers || []
+    
+    let freePeriodStart = null
+    for (let p = 1; p <= payload.num_periods - duration + 1; p++) {
+       let valid = true
+       for (let i = 0; i < duration; i++) {
+         const checkP = p + i
+         
+         // Do not allow placing the class back in its exact original slots if on the same day
+         if (parseInt(targetDay) === cls.day && originalSessionParts.some(orig => orig.period === checkP)) {
+            valid = false;
+            break;
+         }
+         
+         const sectionOccupied = targetDayClasses.some(c => c.period === checkP && !originalSessionParts.includes(c))
+         if (sectionOccupied) { valid = false; break; }
+         
+         let teacherOccupied = false
+         for (const sec of Object.keys(schedule)) {
+            const secClasses = schedule[sec] || []
+            const clash = secClasses.find(c => c.day === parseInt(targetDay) && c.period === checkP && !c.is_recess)
+            
+            if (clash && clash.course_name === cls.course_name && sec === sectionToUpdate && clash.day === cls.day) {
+               continue
+            }
+            
+            if (clash && clash.teachers && clash.teachers.some(t => targetTeachers.includes(t))) {
+               teacherOccupied = true
+               break
+            }
+         }
+         if (teacherOccupied) { valid = false; break; }
+       }
+       
+       if (valid) {
+         freePeriodStart = p
+         break
+       }
+    }
+    
+    if (freePeriodStart === null) {
+      setError(`No free ${duration}-period slot available on ${DAY_LABELS[targetDay]} where the teacher is also free.`)
+      return
+    }
+    
+    const baseName = cls.course_name.includes('(Rescheduled)') ? cls.course_name : cls.course_name + ' (Rescheduled)'
+    const newClasses = []
+    for (let i = 0; i < duration; i++) {
+      newClasses.push({
+        ...cls,
+        course_name: baseName,
+        day: parseInt(targetDay),
+        period: freePeriodStart + i,
+        section: sectionToUpdate
+      })
+    }
+    
+    setHistory(prev => [...prev, schedule])
+    
+    setSchedule(prev => ({
+      ...prev,
+      [sectionToUpdate]: prev[sectionToUpdate]
+        .filter(c => !originalSessionParts.includes(c))
+        .concat(newClasses)
+    }))
+    
+    setInfo(`Rescheduled ${isLab ? 'lab' : 'class'} to ${DAY_LABELS[targetDay]}, Periods ${freePeriodStart}${isLab ? '-' + (freePeriodStart + 1) : ''}.`)
+    setRescheduleModal(null)
+  }
+
+  const handleRemoveClassLocal = () => {
+    if (!rescheduleModal) return
+    const { cls } = rescheduleModal
+    const sectionToUpdate = cls.section || activeSection
+    
+    const originalSessionParts = schedule[sectionToUpdate].filter(c => 
+      c.course_name === cls.course_name && c.day === cls.day
+    )
+    
+    setHistory(prev => [...prev, schedule])
+    
+    setSchedule(prev => ({
+      ...prev,
+      [sectionToUpdate]: prev[sectionToUpdate].filter(
+        c => !originalSessionParts.includes(c)
+      )
+    }))
+    
+    setInfo(`Removed class ${cls.course_name}.`)
+    setRescheduleModal(null)
+  }
+
+  const handleUndo = () => {
+    if (history.length === 0) return
+    const previousState = history[history.length - 1]
+    setSchedule(previousState)
+    setHistory(prev => prev.slice(0, -1))
+    setInfo('Undid last change.')
   }
 
   return (
@@ -553,23 +740,40 @@ export default function App() {
                     <span className="text-sm text-slate-400">{DAY_LABELS.slice(0, payload.num_days).join(', ')} · periods 1–{payload.num_periods}</span>
                   </div>
                 </div>
-                {sections.length > 0 && (
-                  <div className="inline-flex flex-wrap rounded-2xl border border-slate-200/70 bg-slate-100/50 p-1.5 shadow-inner">
-                    {sections.map((sec) => (
-                      <button
-                        key={sec}
-                        onClick={() => setActiveSection(sec)}
-                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
-                          sec === activeSection
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-slate-600 hover:bg-white hover:text-slate-900'
-                        }`}
-                      >
-                        {sec}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleUndo}
+                    disabled={history.length === 0}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Undo2 className="h-4 w-4" /> Undo
+                  </button>
+                  <button
+                    onClick={() => setExtraModal({})} 
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-200 transition"
+                  >
+                    <Plus className="h-4 w-4" /> Schedule Extra Class
+                  </button>
+
+                  {sections.length > 0 && (
+                    <div className="inline-flex flex-wrap rounded-2xl border border-slate-200/70 bg-slate-100/50 p-1.5 shadow-inner">
+                      {sections.map((sec) => (
+                        <button
+                          key={sec}
+                          onClick={() => setActiveSection(sec)}
+                          className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
+                            sec === activeSection
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                          }`}
+                        >
+                          {sec}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xl">
@@ -592,9 +796,8 @@ export default function App() {
         onClose={() => setExtraModal(null)}
         section={activeSection}
         coursesForSection={coursesForActiveSection}
-        targetDay={extraModal?.day}
-        loading={loading}
-        onSubmit={(courseId) => handleExtraSubmit(courseId)} 
+        numDays={payload.num_days}
+        onSubmit={(dayIndex, courseId) => handleExtraSubmitLocal(dayIndex, courseId)} 
       />
 
       <RescheduleModal
@@ -606,8 +809,8 @@ export default function App() {
             : ''
         }
         numDays={payload.num_days}
-        loading={loading}
-        onSubmit={(day) => handleRescheduleSubmit(day)} 
+        onSubmit={(day) => handleRescheduleSubmitLocal(day)} 
+        onRemove={handleRemoveClassLocal}
       />
     </div>
   )

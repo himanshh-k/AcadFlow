@@ -8,6 +8,7 @@ export default function RescheduleModal({
   classLabel,
   numDays,
   onSubmit,
+  onRemove,
   loading,
 }) {
   const [targetDay, setTargetDay] = useState(0)
@@ -64,10 +65,22 @@ export default function RescheduleModal({
           </label>
 
           <p className="text-xs text-slate-500">
-            The backend finds the first free period on that day with a matching room type.
+            The frontend finds the first free period on that day with a matching room type.
           </p>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-between gap-2 pt-2">
+            {onRemove ? (
+              <button
+                type="button"
+                onClick={() => onRemove()}
+                className="rounded-xl px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Remove Class
+              </button>
+            ) : (
+              <div />
+            )}
+            <div className="flex gap-2">
             <button
               type="button"
               onClick={onClose}
@@ -83,6 +96,7 @@ export default function RescheduleModal({
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               Apply
             </button>
+            </div>
           </div>
         </form>
       </div>

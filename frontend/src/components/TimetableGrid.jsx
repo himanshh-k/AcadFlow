@@ -102,7 +102,6 @@ export default function TimetableGrid({
   sectionClasses,
   numDays,
   numPeriods,
-  onEmptySlot,
   onClassClick,
 }) {
   const periods = Array.from({ length: numPeriods }, (_, i) => i + 1)
@@ -118,7 +117,7 @@ export default function TimetableGrid({
           </div>
           <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1.5 border border-blue-200 shadow-sm">
             <span className="text-sm leading-none">💡</span>
-            <p className="text-[11px] font-bold text-blue-700">Hover empty slots to schedule classes</p>
+            <p className="text-[11px] font-bold text-blue-700">Click a scheduled class to move it</p>
           </div>
         </div>
       </div>
@@ -201,15 +200,7 @@ export default function TimetableGrid({
                         }`}
                       >
                         {items.length === 0 ? (
-                          <button
-                            type="button"
-                            onClick={() => onEmptySlot(d, p)}
-                            className="group flex h-full w-full min-h-[3.5rem] items-center justify-center rounded border border-transparent bg-transparent transition-all duration-200 hover:bg-slate-100 hover:border-slate-300"
-                          >
-                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 opacity-0 transition-opacity group-hover:opacity-100">
-                              <span className="text-sm leading-none">+</span> Add
-                            </span>
-                          </button>
+                          <div className="w-full min-h-[3.5rem] rounded bg-transparent"></div>
                         ) : (
                           <div className={`flex w-full h-full min-h-[3.5rem] flex-col gap-1`}>
                             {teaching.map((cls, idx) => (

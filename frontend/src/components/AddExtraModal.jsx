@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, Loader2, X } from 'lucide-react'
+import { BookOpen, X } from 'lucide-react'
 import { DAY_LABELS } from '../data/samplePayload'
 
 export default function AddExtraModal({
@@ -7,18 +7,18 @@ export default function AddExtraModal({
   onClose,
   section,
   coursesForSection,
-  targetDay,
+  numDays,
   onSubmit,
-  loading,
 }) {
   const [courseId, setCourseId] = useState('')
+  const [dayIndex, setDayIndex] = useState('0')
 
   if (!open) return null
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!courseId) return
-    await onSubmit(courseId)
+    onSubmit(parseInt(dayIndex), courseId)
   }
 
   return (
@@ -36,16 +36,9 @@ export default function AddExtraModal({
               <BookOpen className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Add extra class</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Schedule Extra Class</h2>
               <p className="text-sm text-slate-500">
-                Section <strong>{section}</strong>
-                {targetDay != null && (
-                  <>
-                    {' '}
-                    · preferred day <strong>{DAY_LABELS[targetDay]}</strong>
-                  </>
-                )}{' '}
-                — the API searches that day first for a free slot.
+                For section <strong>{section}</strong>
               </p>
             </div>
           </div>
@@ -60,7 +53,23 @@ export default function AddExtraModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">Course</span>
+            <span className="mb-1.5 block text-sm font-medium text-slate-700">Target Day</span>
+            <select
+              value={dayIndex}
+              onChange={(e) => setDayIndex(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none ring-blue-500 focus:ring-2"
+              required
+            >
+              {Array.from({ length: numDays }).map((_, i) => (
+                <option key={i} value={i}>
+                  {DAY_LABELS[i]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-slate-700">Subject</span>
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
@@ -70,8 +79,7 @@ export default function AddExtraModal({
               <option value="">Select a course…</option>
               {coursesForSection.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.is_lab ? ' (Lab)' : ''}
+                  {c.name} {c.is_lab ? '(Lab)' : ''}
                 </option>
               ))}
             </select>
@@ -87,11 +95,10 @@ export default function AddExtraModal({
             </button>
             <button
               type="submit"
-              disabled={loading || !courseId}
+              disabled={!courseId}
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Schedule
+              Apply
             </button>
           </div>
         </form>
