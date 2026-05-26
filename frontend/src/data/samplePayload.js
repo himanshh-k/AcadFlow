@@ -1,10 +1,19 @@
 /** Input sent to POST /api/v1/generate — AIML-A / B / C (matches your Swagger payload). */
 function sectionCourses(section) {
+  const prefix = section.split('-')[1] || 'A';
+  const batch1 = `(${prefix}1, ${prefix}2)`;
+  const batch2 = `(${prefix}3, ${prefix}4)`;
+
   return [
     { id: 'CAT6001', name: 'DL-1', teachers: ['NG'], section, hours: 3, is_lab: false, elective_group: null },
-    { id: 'CAP6001', name: 'DL-1 LAB', teachers: ['NG', 'PD'], section, hours: 2, is_lab: true, elective_group: null },
+    
+    // Batch Swapped Labs: DL-1 vs CV
+    { id: 'CAP6001-A', name: `DL-1 LAB ${batch1}`, teachers: ['NG'], section, hours: 2, is_lab: true, elective_group: `Swap1_${section}` },
+    { id: 'CAP6002-A', name: `CV LAB ${batch2}`, teachers: ['PJ'], section, hours: 2, is_lab: true, elective_group: `Swap1_${section}` },
+    { id: 'CAP6002-B', name: `CV LAB ${batch1}`, teachers: ['PA'], section, hours: 2, is_lab: true, elective_group: `Swap2_${section}` },
+    { id: 'CAP6001-B', name: `DL-1 LAB ${batch2}`, teachers: ['PD'], section, hours: 2, is_lab: true, elective_group: `Swap2_${section}` },
+
     { id: 'CAT6002', name: 'CV', teachers: ['PA'], section, hours: 3, is_lab: false, elective_group: null },
-    { id: 'CAP6002', name: 'CV LAB', teachers: ['PA', 'PJ'], section, hours: 2, is_lab: true, elective_group: null },
     { id: 'CAT6003-1', name: 'NLP', teachers: ['AP'], section, hours: 3, is_lab: false, elective_group: 'Group_6003_Theory' },
     { id: 'CAT6003-2', name: 'DMW', teachers: ['SU'], section, hours: 3, is_lab: false, elective_group: 'Group_6003_Theory' },
     { id: 'CAP6003-1', name: 'NLP LAB', teachers: ['AP', 'PP'], section, hours: 2, is_lab: true, elective_group: 'Group_6003_Lab' },
@@ -30,4 +39,4 @@ export const samplePayload = {
   ],
 }
 
-export const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+export const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']

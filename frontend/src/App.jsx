@@ -16,7 +16,8 @@ import {
   Settings,
   Code,
   X,
-  Undo2
+  Undo2,
+  ArrowRightLeft
 } from 'lucide-react'
 import {
   generateTimetable,
@@ -29,57 +30,8 @@ import ErrorBanner from './components/ErrorBanner'
 import TimetableGrid from './components/TimetableGrid'
 import AddExtraModal from './components/AddExtraModal'
 import RescheduleModal from './components/RescheduleModal'
+import { samplePayload as defaultPayload, DAY_LABELS } from './data/samplePayload'
 
-const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-
-const defaultPayload = {
-  num_days: 5,
-  num_periods: 8,
-  sections: ["AIML-A", "AIML-B", "AIML-C"],
-  teachers: ["NG", "PD", "PA", "PJ", "AP", "PP", "SU", "AL", "ST", "DM", "SL", "SB"],
-  rooms: ["DT 403", "DT 406", "DT 412", "Lab 409", "Lab 411", "Lab 307", "DT 301", "DT 310", "DT 304", "Lab 303", "Lab 309"],
-  courses: [
-    {"id":"CAT6001","name":"DL-1","teachers":["NG"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CAP6001","name":"DL-1 LAB","teachers":["NG","PD"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CAT6002","name":"CV","teachers":["PA"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CAP6002","name":"CV LAB","teachers":["PA","PJ"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CAT6003-1","name":"NLP","teachers":["AP"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
-    {"id":"CAT6003-2","name":"DMW","teachers":["SU"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
-    {"id":"CAP6003-1","name":"NLP LAB","teachers":["AP","PP"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
-    {"id":"CAP6003-2","name":"DMW LAB","teachers":["SU","AL"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
-    {"id":"CAT6004-1","name":"BCT","teachers":["ST"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
-    {"id":"CAT6004-2","name":"CRM","teachers":["SL"],"section":"AIML-A","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
-    {"id":"CAP6004-1","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAP6004-2","name":"CRM LAB","teachers":["SL"],"section":"AIML-A","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAT6005","name":"IoT","teachers":["SB"],"section":"AIML-A","hours":2,"is_lab":false,"elective_group":null},
-    {"id":"CAT6001B","name":"DL-1","teachers":["NG"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CAP6001B","name":"DL-1 LAB","teachers":["NG","PD"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CAT6002B","name":"CV","teachers":["PA"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CAP6002B","name":"CV LAB","teachers":["PA","PJ"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CAT6003-1B","name":"NLP","teachers":["AP"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
-    {"id":"CAT6003-2B","name":"DMW","teachers":["SU"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
-    {"id":"CAP6003-1B","name":"NLP LAB","teachers":["AP","PP"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
-    {"id":"CAP6003-2B","name":"DMW LAB","teachers":["SU","AL"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
-    {"id":"CAT6004-1B","name":"BCT","teachers":["ST"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
-    {"id":"CAT6004-2B","name":"CRM","teachers":["SL"],"section":"AIML-B","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
-    {"id":"CAP6004-1B","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAP6004-2B","name":"CRM LAB","teachers":["SL"],"section":"AIML-B","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAT6005B","name":"IoT","teachers":["SB"],"section":"AIML-B","hours":2,"is_lab":false,"elective_group":null},
-    {"id":"CAT6001C","name":"DL-1","teachers":["NG"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CAP6001C","name":"DL-1 LAB","teachers":["NG","PD"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CAT6002C","name":"CV","teachers":["PA"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":null},
-    {"id":"CAP6002C","name":"CV LAB","teachers":["PA","PJ"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":null},
-    {"id":"CAT6003-1C","name":"NLP","teachers":["AP"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
-    {"id":"CAT6003-2C","name":"DMW","teachers":["SU"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6003_Theory"},
-    {"id":"CAP6003-1C","name":"NLP LAB","teachers":["AP","PP"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
-    {"id":"CAP6003-2C","name":"DMW LAB","teachers":["SU","AL"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6003_Lab"},
-    {"id":"CAT6004-1C","name":"BCT","teachers":["ST"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
-    {"id":"CAT6004-2C","name":"CRM","teachers":["SL"],"section":"AIML-C","hours":3,"is_lab":false,"elective_group":"Group_6004_Theory"},
-    {"id":"CAP6004-1C","name":"BCT LAB","teachers":["ST","DM"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAP6004-2C","name":"CRM LAB","teachers":["SL"],"section":"AIML-C","hours":2,"is_lab":true,"elective_group":"Group_6004_Lab"},
-    {"id":"CAT6005C","name":"IoT","teachers":["SB"],"section":"AIML-C","hours":2,"is_lab":false,"elective_group":null}
-  ]
-}
 
 const emptyPayload = {
   num_days: 5,
@@ -127,6 +79,13 @@ export default function App() {
   // Course Form State - Note sections is now an array
   const [newCourse, setNewCourse] = useState({
     id: '', name: '', teachers: '', sections: [], hours: 3, is_lab: false, elective_group: ''
+  })
+  
+  const [courseInputMode, setCourseInputMode] = useState('single')
+  const [pairedLabs, setPairedLabs] = useState({
+    id1: '', name1: '', teachers1_a: '', teachers1_b: '', 
+    id2: '', name2: '', teachers2_a: '', teachers2_b: '', 
+    sections: [], hours: 2
   })
 
   // Sync JSON text to Payload object
@@ -262,6 +221,61 @@ export default function App() {
     setNewCourse({ id: '', name: '', teachers: '', sections: [], hours: 3, is_lab: false, elective_group: '' })
   }
 
+  const togglePairedLabsSection = (sec) => {
+    setPairedLabs(prev => {
+      if (prev.sections.includes(sec)) {
+        return { ...prev, sections: prev.sections.filter(s => s !== sec) }
+      } else {
+        return { ...prev, sections: [...prev.sections, sec] }
+      }
+    })
+  }
+
+  const handleAddPairedLabs = () => {
+    if (!pairedLabs.id1 || !pairedLabs.name1 || !pairedLabs.id2 || !pairedLabs.name2 || pairedLabs.sections.length === 0) {
+      return alert("All fields and at least one section are required for paired labs.")
+    }
+    
+    const t1a = pairedLabs.teachers1_a.split(',').map(t => t.trim()).filter(t => t)
+    const t1b = pairedLabs.teachers1_b.split(',').map(t => t.trim()).filter(t => t)
+    const t2a = pairedLabs.teachers2_a.split(',').map(t => t.trim()).filter(t => t)
+    const t2b = pairedLabs.teachers2_b.split(',').map(t => t.trim()).filter(t => t)
+
+    const coursesToAdd = []
+    
+    // Generate a secure unique base group name hidden from the user
+    const hiddenGroupName = `Swap_${Math.random().toString(36).substr(2, 6)}`
+
+    pairedLabs.sections.forEach(sec => {
+      const prefix = sec.split('-')[1] || 'A'
+      const batch1 = `(${prefix}1, ${prefix}2)`
+      const batch2 = `(${prefix}3, ${prefix}4)`
+
+      // Group 1: Lab 1 (B1,B2) and Lab 2 (B3,B4)
+      coursesToAdd.push({
+        id: pairedLabs.id1 + '-A', name: `${pairedLabs.name1} ${batch1}`, teachers: t1a, section: sec, hours: pairedLabs.hours, is_lab: true, elective_group: `${hiddenGroupName}_1_${sec}`
+      })
+      coursesToAdd.push({
+        id: pairedLabs.id2 + '-A', name: `${pairedLabs.name2} ${batch2}`, teachers: t2b, section: sec, hours: pairedLabs.hours, is_lab: true, elective_group: `${hiddenGroupName}_1_${sec}`
+      })
+
+      // Group 2: Lab 2 (B1,B2) and Lab 1 (B3,B4)
+      coursesToAdd.push({
+        id: pairedLabs.id2 + '-B', name: `${pairedLabs.name2} ${batch1}`, teachers: t2a, section: sec, hours: pairedLabs.hours, is_lab: true, elective_group: `${hiddenGroupName}_2_${sec}`
+      })
+      coursesToAdd.push({
+        id: pairedLabs.id1 + '-B', name: `${pairedLabs.name1} ${batch2}`, teachers: t1b, section: sec, hours: pairedLabs.hours, is_lab: true, elective_group: `${hiddenGroupName}_2_${sec}`
+      })
+    })
+
+    setPayload(prev => ({
+      ...prev,
+      courses: [...prev.courses, ...coursesToAdd]
+    }))
+
+    setPairedLabs({ id1: '', name1: '', teachers1_a: '', teachers1_b: '', id2: '', name2: '', teachers2_a: '', teachers2_b: '', sections: [], hours: 2 })
+  }
+
   const handleRemoveCourse = (courseId, section) => {
     setPayload(prev => ({
       ...prev,
@@ -347,12 +361,25 @@ export default function App() {
     const isLab = cls.room?.toLowerCase().includes('lab') || /\bLAB\b/i.test(cls.course_name || '')
     const duration = isLab ? 2 : 1
     
-    const originalSessionParts = existingClasses.filter(c => 
-      c.course_name === cls.course_name && c.day === cls.day
-    )
+    // Only capture the specific period that was clicked, plus its adjacent partner if it's a lab block
+    let clsPeriods = [cls.period]
+    if (duration > 1) {
+       const adjacent = existingClasses.find(c => c.course_name === cls.course_name && c.day === cls.day && (c.period === cls.period + 1 || c.period === cls.period - 1))
+       if (adjacent) clsPeriods.push(adjacent.period)
+    }
+    
+    // Only capture the specific class that was clicked (do NOT capture parallel partners)
+    const classesToMove = existingClasses.filter(c => c.course_name === cls.course_name && c.day === cls.day && clsPeriods.includes(c.period))
+    
+    const getElectiveGroup = (courseName, section) => {
+       const baseName = courseName.replace(/ \(Rescheduled\)$/, '').replace(/ \(Extra\)$/, '')
+       const course = payload.courses.find(c => c.name === baseName && c.section === section)
+       return course ? course.elective_group : null
+    }
+    const clsElectiveGroup = getElectiveGroup(cls.course_name, sectionToUpdate)
     
     const targetDayClasses = existingClasses.filter(c => c.day === parseInt(targetDay))
-    const targetTeachers = cls.teachers || []
+    const targetTeachers = [...new Set(classesToMove.flatMap(c => c.teachers || []))]
     
     let freePeriodStart = null
     for (let p = 1; p <= payload.num_periods - duration + 1; p++) {
@@ -361,27 +388,40 @@ export default function App() {
          const checkP = p + i
          
          // Do not allow placing the class back in its exact original slots if on the same day
-         if (parseInt(targetDay) === cls.day && originalSessionParts.some(orig => orig.period === checkP)) {
+         if (parseInt(targetDay) === cls.day && clsPeriods.includes(checkP)) {
             valid = false;
             break;
          }
          
-         const sectionOccupied = targetDayClasses.some(c => c.period === checkP && !originalSessionParts.includes(c))
-         if (sectionOccupied) { valid = false; break; }
+         const sectionClashes = targetDayClasses.filter(c => c.period === checkP && !classesToMove.includes(c))
+         let slotBlocked = false
+         for (const clash of sectionClashes) {
+            const clashGroup = getElectiveGroup(clash.course_name, sectionToUpdate)
+            // If they share the exact same elective_group, allow overlap
+            if (clsElectiveGroup && clashGroup === clsElectiveGroup) {
+               continue
+            }
+            slotBlocked = true
+            break
+         }
+         if (slotBlocked) { valid = false; break; }
          
          let teacherOccupied = false
          for (const sec of Object.keys(schedule)) {
             const secClasses = schedule[sec] || []
-            const clash = secClasses.find(c => c.day === parseInt(targetDay) && c.period === checkP && !c.is_recess)
+            const clashesAtSlot = secClasses.filter(c => c.day === parseInt(targetDay) && c.period === checkP && !c.is_recess)
             
-            if (clash && clash.course_name === cls.course_name && sec === sectionToUpdate && clash.day === cls.day) {
-               continue
+            for (const clash of clashesAtSlot) {
+               if (sec === sectionToUpdate && classesToMove.includes(clash)) {
+                  continue
+               }
+               
+               if (clash.teachers && clash.teachers.some(t => targetTeachers.includes(t))) {
+                  teacherOccupied = true
+                  break
+               }
             }
-            
-            if (clash && clash.teachers && clash.teachers.some(t => targetTeachers.includes(t))) {
-               teacherOccupied = true
-               break
-            }
+            if (teacherOccupied) break
          }
          if (teacherOccupied) { valid = false; break; }
        }
@@ -393,28 +433,25 @@ export default function App() {
     }
     
     if (freePeriodStart === null) {
-      setError(`No free ${duration}-period slot available on ${DAY_LABELS[targetDay]} where the teacher is also free.`)
+      setError(`No free ${duration}-period slot available on ${DAY_LABELS[targetDay]} where the teachers are also free.`)
       return
     }
     
-    const baseName = cls.course_name.includes('(Rescheduled)') ? cls.course_name : cls.course_name + ' (Rescheduled)'
-    const newClasses = []
-    for (let i = 0; i < duration; i++) {
-      newClasses.push({
-        ...cls,
-        course_name: baseName,
-        day: parseInt(targetDay),
-        period: freePeriodStart + i,
-        section: sectionToUpdate
-      })
-    }
+    const minPeriod = Math.min(...clsPeriods)
+    const newClasses = classesToMove.map(c => ({
+      ...c,
+      course_name: c.course_name.includes('(Rescheduled)') ? c.course_name : c.course_name + ' (Rescheduled)',
+      day: parseInt(targetDay),
+      period: freePeriodStart + (c.period - minPeriod),
+      section: sectionToUpdate
+    }))
     
     setHistory(prev => [...prev, schedule])
     
     setSchedule(prev => ({
       ...prev,
       [sectionToUpdate]: prev[sectionToUpdate]
-        .filter(c => !originalSessionParts.includes(c))
+        .filter(c => !classesToMove.includes(c))
         .concat(newClasses)
     }))
     
@@ -427,16 +464,24 @@ export default function App() {
     const { cls } = rescheduleModal
     const sectionToUpdate = cls.section || activeSection
     
-    const originalSessionParts = schedule[sectionToUpdate].filter(c => 
-      c.course_name === cls.course_name && c.day === cls.day
-    )
+    const existingClasses = schedule[sectionToUpdate] || []
+    
+    // Only capture the specific period that was clicked, plus its adjacent partner if it's a lab block
+    let clsPeriods = [cls.period]
+    const isLab = cls.room?.toLowerCase().includes('lab') || /\bLAB\b/i.test(cls.course_name || '')
+    if (isLab) {
+       const adjacent = existingClasses.find(c => c.course_name === cls.course_name && c.day === cls.day && (c.period === cls.period + 1 || c.period === cls.period - 1))
+       if (adjacent) clsPeriods.push(adjacent.period)
+    }
+    
+    const classesToMove = existingClasses.filter(c => c.course_name === cls.course_name && c.day === cls.day && clsPeriods.includes(c.period))
     
     setHistory(prev => [...prev, schedule])
     
     setSchedule(prev => ({
       ...prev,
       [sectionToUpdate]: prev[sectionToUpdate].filter(
-        c => !originalSessionParts.includes(c)
+        c => !classesToMove.includes(c)
       )
     }))
     
@@ -660,46 +705,141 @@ export default function App() {
                         
                         {/* Add Course Form - MULTI-SECTION ENABLED */}
                         <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
-                          <p className="text-sm font-bold text-slate-700">Add New Course to Sections</p>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input placeholder="Course ID (e.g. CS101)" className="builder-input" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} />
-                            <input placeholder="Course Name (e.g. Web Dev)" className="builder-input" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
-                            
-                            {/* MULTI-SELECT CHIPS FOR SECTIONS */}
-                            <div className="col-span-1 sm:col-span-2 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                              <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 mb-2">Assign Course to these Sections:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {payload.sections.length === 0 && <span className="text-xs text-slate-400 italic">Add sections in Infrastructure first...</span>}
-                                {payload.sections.map(s => (
-                                  <button
-                                    key={s}
-                                    type="button"
-                                    onClick={() => toggleCourseSection(s)}
-                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                                      newCourse.sections.includes(s) 
-                                        ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-700' 
-                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
-                                    }`}
-                                  >
-                                    {s}
-                                  </button>
-                                ))}
-                              </div>
+                          <div className="flex flex-wrap justify-between items-center border-b border-slate-200 pb-3 gap-2">
+                            <p className="text-sm font-bold text-slate-700">Add New Course to Sections</p>
+                            <div className="flex bg-slate-200/60 p-1 rounded-xl">
+                              <button 
+                                onClick={() => setCourseInputMode('single')} 
+                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${courseInputMode === 'single' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                Single Course
+                              </button>
+                              <button 
+                                onClick={() => setCourseInputMode('paired_labs')} 
+                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${courseInputMode === 'paired_labs' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                Paired Batched Labs
+                              </button>
                             </div>
-
-                            <input placeholder="Teacher Initials (comma separated)" className="builder-input" value={newCourse.teachers} onChange={e => setNewCourse({...newCourse, teachers: e.target.value})} />
-                            <div className="flex items-center gap-3 px-4 border border-slate-200 rounded-lg bg-white">
-                              <input type="checkbox" checked={newCourse.is_lab} onChange={e => setNewCourse({...newCourse, is_lab: e.target.checked})} id="islab" className="w-4 h-4 text-blue-600 rounded" />
-                              <label htmlFor="islab" className="text-sm font-medium text-slate-700 cursor-pointer">Requires Lab Room</label>
-                            </div>
-                            <input type="number" placeholder="Total Hours per Week" className="builder-input" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: parseInt(e.target.value)})} />
-                            <input placeholder="Elective Group (Leave blank for core subjects)" className="builder-input" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
                           </div>
                           
-                          <button onClick={handleAddCourse} className="w-full mt-2 bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl text-sm font-semibold shadow-md transition flex justify-center items-center gap-2">
-                            <Plus className="h-5 w-5" /> Append Course to Selected Sections
-                          </button>
+                          {courseInputMode === 'single' ? (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input placeholder="Course ID (e.g. CS101)" className="builder-input" value={newCourse.id} onChange={e => setNewCourse({...newCourse, id: e.target.value})} />
+                                <input placeholder="Course Name (e.g. Web Dev)" className="builder-input" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
+                                
+                                {/* MULTI-SELECT CHIPS FOR SECTIONS */}
+                                <div className="col-span-1 sm:col-span-2 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                                  <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 mb-2">Assign Course to these Sections:</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {payload.sections.length === 0 && <span className="text-xs text-slate-400 italic">Add sections in Infrastructure first...</span>}
+                                    {payload.sections.map(s => (
+                                      <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => toggleCourseSection(s)}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                          newCourse.sections.includes(s) 
+                                            ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-700' 
+                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                                        }`}
+                                      >
+                                        {s}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <input placeholder="Teacher Initials (comma separated)" className="builder-input" value={newCourse.teachers} onChange={e => setNewCourse({...newCourse, teachers: e.target.value})} />
+                                <div className="flex items-center gap-3 px-4 border border-slate-200 rounded-lg bg-white">
+                                  <input type="checkbox" checked={newCourse.is_lab} onChange={e => setNewCourse({...newCourse, is_lab: e.target.checked})} id="islab" className="w-4 h-4 text-blue-600 rounded" />
+                                  <label htmlFor="islab" className="text-sm font-medium text-slate-700 cursor-pointer">Requires Lab Room</label>
+                                </div>
+                                <input type="number" placeholder="Total Hours per Week" className="builder-input" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: parseInt(e.target.value)})} />
+                                <input placeholder="Elective Group (Leave blank for core subjects)" className="builder-input" value={newCourse.elective_group} onChange={e => setNewCourse({...newCourse, elective_group: e.target.value})} />
+                              </div>
+                              
+                              <button onClick={handleAddCourse} className="w-full mt-2 bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl text-sm font-semibold shadow-md transition flex justify-center items-center gap-2">
+                                <Plus className="h-5 w-5" /> Append Course to Selected Sections
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 mb-4">
+                                <h4 className="text-sm font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                                  <ArrowRightLeft className="h-4 w-4" /> Create Parallel Batched Labs
+                                </h4>
+                                <p className="text-xs text-indigo-700/80 leading-relaxed">
+                                  Combine two lab courses that happen simultaneously. The system will automatically split the section into two batches (e.g. A1/A2 and A3/A4) and schedule them to safely swap between these two labs.
+                                </p>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
+                                {/* Lab 1 */}
+                                <div className="space-y-4 bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                                  <p className="text-sm font-bold text-slate-700 pb-1">First Lab Session</p>
+                                  <input placeholder="Course ID (e.g. LAB101)" className="builder-input w-full bg-slate-50" value={pairedLabs.id1} onChange={e => setPairedLabs({...pairedLabs, id1: e.target.value})} />
+                                  <input placeholder="Course Name (e.g. DL-1)" className="builder-input w-full bg-slate-50" value={pairedLabs.name1} onChange={e => setPairedLabs({...pairedLabs, name1: e.target.value})} />
+                                  <div className="pt-2">
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">Teacher Assignments</p>
+                                    <input placeholder="Teachers for 1st Half (A1,A2)" className="builder-input w-full text-sm mb-2" value={pairedLabs.teachers1_a} onChange={e => setPairedLabs({...pairedLabs, teachers1_a: e.target.value})} />
+                                    <input placeholder="Teachers for 2nd Half (A3,A4)" className="builder-input w-full text-sm" value={pairedLabs.teachers1_b} onChange={e => setPairedLabs({...pairedLabs, teachers1_b: e.target.value})} />
+                                  </div>
+                                </div>
+                                
+                                {/* Swap Icon */}
+                                <div className="flex items-center justify-center py-2 md:py-0">
+                                  <div className="bg-slate-100 p-2 rounded-full text-slate-400">
+                                    <ArrowRightLeft className="h-5 w-5" />
+                                  </div>
+                                </div>
+
+                                {/* Lab 2 */}
+                                <div className="space-y-4 bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                                  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                  <p className="text-sm font-bold text-slate-700 pb-1">Second Lab Session</p>
+                                  <input placeholder="Course ID (e.g. LAB102)" className="builder-input w-full bg-slate-50" value={pairedLabs.id2} onChange={e => setPairedLabs({...pairedLabs, id2: e.target.value})} />
+                                  <input placeholder="Course Name (e.g. CV)" className="builder-input w-full bg-slate-50" value={pairedLabs.name2} onChange={e => setPairedLabs({...pairedLabs, name2: e.target.value})} />
+                                  <div className="pt-2">
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">Teacher Assignments</p>
+                                    <input placeholder="Teachers for 1st Half (A1,A2)" className="builder-input w-full text-sm mb-2" value={pairedLabs.teachers2_a} onChange={e => setPairedLabs({...pairedLabs, teachers2_a: e.target.value})} />
+                                    <input placeholder="Teachers for 2nd Half (A3,A4)" className="builder-input w-full text-sm" value={pairedLabs.teachers2_b} onChange={e => setPairedLabs({...pairedLabs, teachers2_b: e.target.value})} />
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Shared Settings */}
+                              <div className="mt-6 col-span-1 sm:col-span-2 space-y-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                  <p className="text-xs uppercase tracking-wider font-semibold text-slate-500">Shared Settings</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <input type="number" placeholder="Hours per week (e.g. 2)" className="builder-input" value={pairedLabs.hours} onChange={e => setPairedLabs({...pairedLabs, hours: parseInt(e.target.value)})} />
+                                  </div>
+                                  <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 pt-2">Assign to Sections:</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {payload.sections.length === 0 && <span className="text-xs text-slate-400 italic">Add sections first...</span>}
+                                    {payload.sections.map(s => (
+                                      <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => togglePairedLabsSection(s)}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                          pairedLabs.sections.includes(s) 
+                                            ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-700' 
+                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                                        }`}
+                                      >
+                                        {s}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              <button onClick={handleAddPairedLabs} className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-sm font-semibold shadow-md transition flex justify-center items-center gap-2">
+                                <Plus className="h-5 w-5" /> Generate Swapped Batches for Sections
+                              </button>
+                            </>
+                          )}
                         </div>
 
                         {/* Course List */}
