@@ -5,3 +5,7 @@ pandas
 openpyxl
 pydantic
 sqlalchemy
+passlib
+bcrypt
+python-jose
+python-multipart

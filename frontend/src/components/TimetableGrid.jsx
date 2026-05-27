@@ -87,6 +87,11 @@ function ClassCard({ cls, onClassClick }) {
       <div className={`absolute top-1 right-1 px-1 rounded text-[10px] font-extrabold tracking-wider ${extra || rescheduled ? 'bg-slate-700/80 text-slate-300' : 'bg-slate-200/50 text-slate-500'}`}>
         {cls.room}
       </div>
+      {cls.section && (
+        <div className={`absolute bottom-1 right-1 px-1 rounded text-[9px] font-bold ${extra || rescheduled ? 'bg-slate-700/80 text-slate-300' : 'bg-indigo-100 text-indigo-700'}`}>
+          {cls.section}
+        </div>
+      )}
 
       {/* Hidden Teacher Name, revealed entirely on hover */}
       <div className="mt-2 h-0 opacity-0 transform translate-y-1 transition-all duration-300 group-hover:h-4 group-hover:opacity-100 group-hover:translate-y-0 overflow-hidden">

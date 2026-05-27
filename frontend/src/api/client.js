@@ -1,12 +1,19 @@
 import axios from 'axios'
 
-// Dev: same-origin /api → Vite proxy → backend (avoids localhost vs 127.0.0.1 CORS issues)
-const BASE_URL =
-  import.meta.env.DEV ? '' : 'http://127.0.0.1:8000'
+// Always use the explicit backend URL to avoid Vite proxy mismatches for root endpoints (like /login)
+const BASE_URL = 'http://127.0.0.1:8000'
 
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+})
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('acadflow_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
 })
 
 export async function generateTimetable(payload) {

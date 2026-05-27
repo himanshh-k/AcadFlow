@@ -1,16 +1,24 @@
 import io
 import math
-from fastapi import FastAPI, HTTPException
+import json
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from ortools.sat.python import cp_model
+
+from . import models, auth, database
 
 # Import openpyxl components for advanced Excel formatting
 import openpyxl.utils
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
+
+models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="AcadFlow: Intelligent Academic Scheduling and Resource Management")
 
@@ -348,19 +356,62 @@ def generate_schedule(data: TimetableRequest) -> dict:
     else:
         return {"status": "failed", "schedule": None, "message": "Could not find a conflict-free timetable."}
 
-# FastAPI endpoints
+@app.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+    if not user or not auth.verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = auth.create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer", "role": user.role, "teacher_initials": user.teacher_initials}
+
+@app.get("/me")
+def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
+    return {"username": current_user.username, "role": current_user.role, "teacher_initials": current_user.teacher_initials}
+
+@app.get("/active_timetable")
+def get_active_timetable(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    state = db.query(models.TimetableState).order_by(models.TimetableState.id.desc()).first()
+    if not state:
+        return {"status": "empty", "message": "No timetable has been generated yet."}
+    
+    schedule = json.loads(state.schedule_json)
+    payload = json.loads(state.payload_json)
+    return {"status": "success", "schedule": schedule, "payload": payload}
+
+
 @app.post("/api/v1/generate", response_model=TimetableResponse)
-async def create_timetable(request: TimetableRequest):
+async def create_timetable(
+    request: TimetableRequest, 
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Only administrators can generate timetables")
+
     try:
         result = generate_schedule(request)
         if result["status"] == "failed":
             raise HTTPException(status_code=400, detail=result["message"])
+            
+        # Save to database
+        new_state = models.TimetableState(
+            schedule_json=json.dumps(jsonable_encoder(result["schedule"])),
+            payload_json=request.json()
+        )
+        db.query(models.TimetableState).delete()
+        db.add(new_state)
+        db.commit()
+        
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/reschedule-dynamic", response_model=TimetableResponse)
-async def dynamic_reschedule(request: RescheduleRequest):
+async def dynamic_reschedule(request: RescheduleRequest, current_user: models.User = Depends(auth.get_current_user)):
     schedule = request.current_schedule
     section = request.course.section
     teachers = request.course.teachers
@@ -396,10 +447,10 @@ async def dynamic_reschedule(request: RescheduleRequest):
             schedule[section] = sorted(schedule[section], key=lambda x: (x.day, x.period))
             return {"status": "success", "schedule": schedule, "message": f"Rescheduled to Period {p} in {available[0]}."}
             
-    raise HTTPException(status_code=400, detail="No available slots found in matching room types on this day.")
+        raise HTTPException(status_code=400, detail="No available slots found in matching room types on this day.")
 
 @app.post("/api/v1/schedule-extra", response_model=TimetableResponse)
-async def schedule_extra_class(request: ExtraClassRequest):
+async def schedule_extra_class(request: ExtraClassRequest, current_user: models.User = Depends(auth.get_current_user)):
     """Greedy search across the week to find an empty slot for an extra class."""
     schedule = request.current_schedule
     section = request.section
@@ -585,16 +636,97 @@ async def export_schedule_to_excel(request: ExportRequest):
                 ws.cell(row=current_row, column=3, value=coordinator).border = thin_border
                 current_row += 1
 
-        output = io.BytesIO()
-        wb.save(output)
-        output.seek(0)
-
-        headers = {'Content-Disposition': 'attachment; filename="AcadFlow_Timetable_Formatted.xlsx"'}
+        out = io.BytesIO()
+        wb.save(out)
+        out.seek(0)
+    
         return StreamingResponse(
-            output, 
-            headers=headers, 
-            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            out, 
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=timetable.xlsx"}
         )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate Excel: {str(e)}")
+
+@app.post("/export_teacher")
+def export_teacher_timetable(request: ExportRequest, teacher: str, current_user: models.User = Depends(auth.get_current_user)):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"{teacher} Schedule"
+
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    header_fill = PatternFill(start_color="4A90E2", end_color="4A90E2", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True)
+    border = Border(
+        left=Side(style='thin', color="BFBFBF"),
+        right=Side(style='thin', color="BFBFBF"),
+        top=Side(style='thin', color="BFBFBF"),
+        bottom=Side(style='thin', color="BFBFBF")
+    )
+    center_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    # Headers
+    ws.cell(row=1, column=1, value="Day / Period").fill = header_fill
+    ws.cell(row=1, column=1).font = header_font
+    ws.cell(row=1, column=1).border = border
+    ws.cell(row=1, column=1).alignment = center_align
+
+    for p in range(request.num_periods):
+        cell = ws.cell(row=1, column=p+2, value=f"Period {p+1}")
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.border = border
+        cell.alignment = center_align
+
+    # Fill data
+    for d_idx, day_name in enumerate(days[:request.num_days]):
+        row_idx = d_idx + 2
+        day_cell = ws.cell(row=row_idx, column=1, value=day_name)
+        day_cell.fill = PatternFill(start_color="F5F7FA", end_color="F5F7FA", fill_type="solid")
+        day_cell.font = Font(bold=True)
+        day_cell.border = border
+        day_cell.alignment = center_align
+
+        for p in range(request.num_periods):
+            cell = ws.cell(row=row_idx, column=p+2)
+            cell.border = border
+            cell.alignment = center_align
+            
+            # Find classes for this teacher on this day and period
+            teacher_classes = []
+            for sec, classes in request.schedule.items():
+                for cls in classes:
+                    if cls.day == d_idx and cls.period == p and teacher in cls.teachers:
+                        if not cls.is_recess:
+                            teacher_classes.append(f"{cls.course_name}\n({sec})\n{cls.room}")
+            
+            if teacher_classes:
+                cell.value = "\n---\n".join(teacher_classes)
+                cell.fill = PatternFill(start_color="E1F0FF", end_color="E1F0FF", fill_type="solid")
+            else:
+                cell.value = ""
+
+    # Adjust column widths
+    ws.column_dimensions['A'].width = 15
+    for p in range(request.num_periods):
+        col_letter = openpyxl.utils.get_column_letter(p + 2)
+        ws.column_dimensions[col_letter].width = 18
+
+    # Add teacher info row
+    ws.insert_rows(1)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=request.num_periods+1)
+    title_cell = ws.cell(row=1, column=1, value=f"Personal Timetable: {teacher}")
+    title_cell.font = Font(size=14, bold=True, color="2C3E50")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    title_cell.fill = PatternFill(start_color="EAECEF", end_color="EAECEF", fill_type="solid")
+    
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    
+    return StreamingResponse(
+        out, 
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={teacher}_schedule.xlsx"}
+    )

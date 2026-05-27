@@ -17,7 +17,8 @@ import {
   Code,
   X,
   Undo2,
-  ArrowRightLeft
+  ArrowRightLeft,
+  LogOut
 } from 'lucide-react'
 import {
   generateTimetable,
@@ -26,10 +27,12 @@ import {
   rescheduleDynamic,
   getErrorMessage,
 } from './api/client'
+import { getActiveTimetable, exportTeacherExcel } from './api/auth'
 import ErrorBanner from './components/ErrorBanner'
 import TimetableGrid from './components/TimetableGrid'
 import AddExtraModal from './components/AddExtraModal'
 import RescheduleModal from './components/RescheduleModal'
+import Login from './components/Login'
 import { samplePayload as defaultPayload, DAY_LABELS } from './data/samplePayload'
 
 
@@ -52,6 +55,11 @@ function findCourseForClass(cls, section, catalog) {
 }
 
 export default function App() {
+  // --- AUTH STATE ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userRole, setUserRole] = useState(null)
+  const [teacherInitials, setTeacherInitials] = useState(null)
+
   // --- STATE ---
   const [schedule, setSchedule] = useState(null)
   const [history, setHistory] = useState([])
@@ -61,7 +69,7 @@ export default function App() {
   const [info, setInfo] = useState('')
   
   // Navigation State
-  const [activeView, setActiveView] = useState('setup') 
+  const [activeView, setActiveView] = useState('setup')
   
   const [extraModal, setExtraModal] = useState(null)
   const [rescheduleModal, setRescheduleModal] = useState(null)
@@ -100,6 +108,64 @@ export default function App() {
     }
   }, [jsonInput, inputMode, payload])
 
+  // --- AUTH EFFECTS ---
+  const fetchActiveTimetable = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await getActiveTimetable()
+      if (data.status === 'success') {
+        setSchedule(data.schedule)
+        setPayload(data.payload)
+        const first = Object.keys(data.schedule).sort()[0]
+        if (first) setActiveSection(first)
+        setActiveView('timetable')
+      } else {
+        setInfo(data.message)
+      }
+    } catch(err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('acadflow_token')
+    const role = localStorage.getItem('acadflow_role')
+    const teacher = localStorage.getItem('acadflow_teacher')
+    if (token) {
+      setIsAuthenticated(true)
+      setUserRole(role)
+      setTeacherInitials(teacher)
+      if (role === 'faculty') {
+        fetchActiveTimetable()
+        setActiveView('timetable')
+      }
+    }
+  }, [fetchActiveTimetable])
+
+  const handleLoginSuccess = (role, teacher) => {
+    setIsAuthenticated(true)
+    setUserRole(role)
+    setTeacherInitials(teacher)
+    if (role === 'faculty') {
+      fetchActiveTimetable()
+      setActiveView('timetable')
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('acadflow_token')
+    localStorage.removeItem('acadflow_role')
+    localStorage.removeItem('acadflow_teacher')
+    setIsAuthenticated(false)
+    setUserRole(null)
+    setTeacherInitials(null)
+    setSchedule(null)
+    setActiveView('setup')
+  }
+
   useEffect(() => {
     if (payload.sections.length > 0) {
       if (!activeSection) setActiveSection(payload.sections[0])
@@ -112,6 +178,21 @@ export default function App() {
   const sections = useMemo(() => (schedule ? Object.keys(schedule).sort() : payload.sections), [schedule, payload.sections])
   const coursesForActiveSection = useMemo(() => payload.courses.filter((c) => c.section === activeSection), [payload.courses, activeSection])
   const sectionClasses = schedule?.[activeSection] ?? []
+
+  // --- TEACHER SCHEDULE COMPUTE ---
+  const teacherClasses = useMemo(() => {
+    if (!schedule || !teacherInitials) return []
+    const classes = []
+    for (const [sec, secClasses] of Object.entries(schedule)) {
+      for (const cls of secClasses) {
+        if (!cls.is_recess && cls.teachers && cls.teachers.includes(teacherInitials)) {
+          classes.push({ ...cls, section: sec })
+        }
+      }
+    }
+    return classes
+  }, [schedule, teacherInitials])
+
 
   // --- ACTIONS ---
   const loadTimetable = useCallback(async (fromButton = false) => {
@@ -157,8 +238,13 @@ export default function App() {
     setError('')
     setLoading(true)
     try {
-      await exportExcel({ schedule, num_days: payload.num_days, num_periods: payload.num_periods })
-      setInfo('Excel file downloaded.')
+      if (userRole === 'faculty' && teacherInitials) {
+        await exportTeacherExcel({ schedule, num_days: payload.num_days, num_periods: payload.num_periods, teacher: teacherInitials })
+        setInfo('Your personal schedule has been downloaded.')
+      } else {
+        await exportExcel({ schedule, num_days: payload.num_days, num_periods: payload.num_periods })
+        setInfo('Excel file downloaded.')
+      }
     } catch (e) {
       setError(getErrorMessage(e))
     } finally {
@@ -497,6 +583,10 @@ export default function App() {
     setInfo('Undid last change.')
   }
 
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />
+  }
+
   return (
     <div className="acadflow-page-bg acadflow-grid-noise relative min-h-screen">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
@@ -523,24 +613,37 @@ export default function App() {
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
                 <LayoutGrid className="h-[18px] w-[18px]" />
               </div>
-              <span className="text-[15px] font-semibold tracking-tight text-slate-900">AcadFlow Studio</span>
+              <span className="text-[15px] font-semibold tracking-tight text-slate-900">
+                AcadFlow Studio {userRole === 'faculty' && <span className="ml-2 px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-700 font-bold">Faculty Portal</span>}
+              </span>
             </div>
             
             <div className="flex gap-2">
               <button
-                onClick={clearSavedAndRegenerate}
-                disabled={loading}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
+                onClick={handleLogout}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 mr-4"
               >
-                <Trash2 className="h-4 w-4" /> <span className="hidden sm:inline">Clear All</span>
+                <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Logout</span>
               </button>
-              <button
-                onClick={() => loadTimetable(true)}
-                disabled={loading}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
-              >
-                <Sparkles className="h-4 w-4" /> <span className="hidden sm:inline">Generate Timetable</span>
-              </button>
+              
+              {userRole === 'admin' && (
+                <>
+                  <button
+                    onClick={clearSavedAndRegenerate}
+                    disabled={loading}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" /> <span className="hidden sm:inline">Clear All</span>
+                  </button>
+                  <button
+                    onClick={() => loadTimetable(true)}
+                    disabled={loading}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <Sparkles className="h-4 w-4" /> <span className="hidden sm:inline">Generate Timetable</span>
+                  </button>
+                </>
+              )}
               {schedule && (
                 <button
                   onClick={runExport}
@@ -556,32 +659,34 @@ export default function App() {
 
         <main className="mx-auto max-w-[1600px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
           
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 shadow-inner backdrop-blur-sm">
-              <button
-                onClick={() => setActiveView('setup')}
-                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
-                  activeView === 'setup'
-                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
-                }`}
-              >
-                <Settings className="h-4 w-4" /> 1. Configuration & Data
-              </button>
-              <button
-                onClick={() => schedule && setActiveView('timetable')}
-                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
-                  activeView === 'timetable'
-                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
-                    : !schedule
-                    ? 'text-slate-400 cursor-not-allowed'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
-                }`}
-              >
-                <Grid3X3 className="h-4 w-4" /> 2. Generated Timetable
-              </button>
+          {userRole === 'admin' && (
+            <div className="flex justify-center mb-8">
+              <div className="inline-flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 shadow-inner backdrop-blur-sm">
+                <button
+                  onClick={() => setActiveView('setup')}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    activeView === 'setup'
+                      ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <Settings className="h-4 w-4" /> 1. Configuration & Data
+                </button>
+                <button
+                  onClick={() => schedule && setActiveView('timetable')}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    activeView === 'timetable'
+                      ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
+                      : !schedule
+                      ? 'text-slate-400 cursor-not-allowed'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <Grid3X3 className="h-4 w-4" /> 2. Generated Timetable
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <ErrorBanner message={error} onDismiss={() => setError('')} />
 
@@ -876,15 +981,44 @@ export default function App() {
             </div>
           )}
 
+
           {activeView === 'timetable' && schedule && (
             <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+              
+              {userRole === 'faculty' && teacherInitials && (
+                <div className="mb-12">
+                  <div className="flex items-center gap-3 text-sm text-slate-500 mb-6 border-b border-slate-200/60 pb-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100/50">
+                      <Coffee className="h-5 w-5" strokeWidth={2} />
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-xl font-bold text-slate-800 leading-tight">My Schedule ({teacherInitials})</span>
+                      <span className="text-sm text-slate-500">Your consolidated weekly timetable across all sections</span>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-3xl p-6 border border-indigo-100 shadow-xl ring-1 ring-indigo-900/5">
+                    <TimetableGrid
+                      sectionClasses={teacherClasses}
+                      numDays={payload.num_days}
+                      numPeriods={payload.num_periods}
+                      onEmptySlot={(day, period) => {
+                        // For faculty global grid, clicking empty slot shouldn't default to activeSection, it's ambiguous.
+                        // We can just set extra modal to open, but prompt them to use the section view below.
+                        alert("To schedule an extra class, please select the specific section from the tabs below first.")
+                      }}
+                      onClassClick={(cls) => !cls.is_recess && setRescheduleModal({ cls })}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-slate-200/60 pb-6">
                 <div className="flex items-center gap-3 text-sm text-slate-500 mb-4 sm:mb-0">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100/50">
                     <Clock className="h-5 w-5" strokeWidth={2} />
                   </span>
                   <div className="flex flex-col">
-                    <span className="text-lg font-bold text-slate-800 leading-tight">Section: {activeSection}</span>
+                    <span className="text-lg font-bold text-slate-800 leading-tight">{userRole === 'faculty' ? 'Section Timetables' : `Section: ${activeSection}`}</span>
                     <span className="text-sm text-slate-400">{DAY_LABELS.slice(0, payload.num_days).join(', ')} · periods 1–{payload.num_periods}</span>
                   </div>
                 </div>
