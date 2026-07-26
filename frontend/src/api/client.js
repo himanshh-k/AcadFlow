@@ -1,8 +1,7 @@
 import axios from 'axios'
 
 // Dev: same-origin /api → Vite proxy → backend (avoids localhost vs 127.0.0.1 CORS issues)
-const BASE_URL =
-  import.meta.env.DEV ? '' : 'http://127.0.0.1:8000'
+const BASE_URL = 'https://acadflow-m0jy.onrender.com';
 
 export const api = axios.create({
   baseURL: BASE_URL,
